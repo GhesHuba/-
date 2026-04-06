@@ -1,0 +1,546 @@
+const fs = await import('fs');
+const sprites = ['s1','s2','s3','s4','s5','s6','s7','s8','m12','m3','m4','m67','m81','m82'];
+const b64 = {};
+for (const name of sprites) {
+  const buf = fs.readFileSync(`/home/runner/workspace/artifacts/darkblade-game/public/sprites/${name}.png`);
+  b64[name] = buf.toString('base64');
+}
+const spriteDataJS = `const SPRITE_DATA = {\n` +
+  Object.entries(b64).map(([k,v]) => `  "${k}": "data:image/png;base64,${v}"`).join(',\n') +
+`\n};`;
+const html = `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DarkBlade — Stalin's Journey</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;touch-action:none}
+#root{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;border:2px solid #3A1A5A;max-width:100vw;max-height:62vh}
+#controls{display:flex;width:100%;max-width:960px;padding:10px 16px;justify-content:space-between;align-items:center;margin-top:6px}
+.btn{width:68px;height:68px;border:3px solid rgba(255,255,255,0.25);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:bold;user-select:none;-webkit-user-select:none;touch-action:none;cursor:pointer;font-family:monospace;box-shadow:0 4px 0 rgba(0,0,0,0.6);flex-shrink:0}
+.btn-move{background:rgba(55,25,100,0.95)}
+.btn-atk{background:rgba(160,40,15,0.95);font-size:14px}
+.btn-jmp{background:rgba(15,90,170,0.95)}
+#hint{color:rgba(160,130,200,0.6);font-size:10px;text-align:center;font-family:monospace;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="root">
+  <canvas id="gc" width="960" height="540"></canvas>
+  <div id="controls">
+    <div style="display:flex;gap:10px">
+      <div class="btn btn-move" id="btnL">◀</div>
+      <div class="btn btn-move" id="btnR">▶</div>
+    </div>
+    <div id="hint">← → MOVE<br>SPACE JUMP Z ATTACK</div>
+    <div style="display:flex;gap:10px">
+      <div class="btn btn-atk" id="btnA">ATCK</div>
+      <div class="btn btn-jmp" id="btnJ">JUMP</div>
+    </div>
+  </div>
+</div>
+<script>
+${spriteDataJS}
+// ─── Sprite Cache ───────────────────────────────────────────────────────────
+const imgCache = {};
+function getImg(key) {
+  if (imgCache[key]) return imgCache[key];
+  const img = new Image();
+  img.src = SPRITE_DATA[key];
+  imgCache[key] = img;
+  return img;
+}
+// Preload all
+Object.keys(SPRITE_DATA).forEach(k => getImg(k));
+const PLAYER_SPRITES = {1:'s1',2:'s3',3:'s4',4:'s5',5:'s6',6:'s6',7:'s7',8:'s8'};
+const ENEMY_SPRITES  = {m12:'m12',m3:'m3',m4:'m4',m67:'m67',m81:'m81',m82:'m82'};
+const LEVEL_NAMES    = {1:'الطفولة',2:'الشباب والثورة',3:'العمل السياسي',4:'صراع السلطة',5:'السيطرة',6:'التصنيع',7:'الحرب',8:'النهاية'};
+// ─── Constants ───────────────────────────────────────────────────────────────
+const GRAVITY=0.55, JUMP_FORCE=-13, MOVE_SPEED=4.5, FRICTION=0.82;
+const CW=960, CH=540;
+// ─── Utility ─────────────────────────────────────────────────────────────────
+function px(v){return Math.round(v);}
+function overlap(ax,ay,aw,ah,bx,by,bw,bh){
+  return ax<bx+bw && ax+aw>bx && ay<by+bh && ay+ah>by;
+}
+// ─── Level Data ──────────────────────────────────────────────────────────────
+let _eid=0, _cid=0;
+function mkE(sk,type,x,y,pl,pr,hp,isBoss=false){
+  const w=isBoss?72:type==='bat'?36:type==='knight'?44:40;
+  const h=isBoss?88:type==='bat'?32:type==='knight'?56:52;
+  return{id:_eid++,x,y,width:w,height:h,vx:-1.2,vy:0,hp,maxHp:hp,type,sk,pl,pr,onGround:false,facingRight:false,stunTimer:0,dead:false,isBoss};
+}
+function mkP(x,y,w,h,t='stone'){return{x,y,width:w,height:h,type:t};}
+function mkS(x,y,w){return{x,y,width:w,height:16};}
+function mkC(x,y){return{id:_cid++,x,y,collected:false};}
+const LEVELS=[
+  // 1 الطفولة
+  {id:1,bg1:'#2d4a1e',bg2:'#0a1a05',w:2400,h:600,reqBoss:false,
+   plats:[mkP(0,560,400,40),mkP(420,490,180,20,'wood'),mkP(650,420,200,20,'wood'),mkP(900,480,220,20),mkP(1180,400,200,20,'wood'),mkP(1440,440,240,20),mkP(1740,380,200,20,'wood'),mkP(2000,440,400,40)],
+   enemies:[mkE('m12','skeleton',920,420,900,1100,2),mkE('m12','skeleton',1460,380,1440,1660,2)],
+   coins:[mkC(460,450),mkC(700,380),mkC(950,440),mkC(1220,360),mkC(1480,400),mkC(1790,340),mkC(2050,400),mkC(2150,400)],
+   spikes:[],exitX:2300,exitY:420},
+  // 2 الشباب والثورة
+  {id:2,bg1:'#1a1a3a',bg2:'#0a0a14',w:2800,h:600,reqBoss:false,
+   plats:[mkP(0,560,350,40),mkP(380,480,160,20,'wood'),mkP(580,410,160,20,'dark'),mkP(800,340,160,20,'wood'),mkP(1000,460,180,20),mkP(1240,380,160,20,'wood'),mkP(1460,440,200,20),mkP(1720,360,160,20,'dark'),mkP(1940,440,180,20),mkP(2180,370,200,20,'wood'),mkP(2440,440,360,40)],
+   enemies:[mkE('m12','skeleton',820,280,800,950,2),mkE('m12','bat',1250,300,1000,1400,2),mkE('m12','skeleton',1740,300,1720,1880,2),mkE('m12','bat',2200,270,1900,2400,2)],
+   coins:[mkC(420,440),mkC(620,370),mkC(840,300),mkC(1050,420),mkC(1280,340),mkC(1500,400),mkC(1760,320),mkC(1970,400),mkC(2220,330),mkC(2490,400)],
+   spikes:[mkS(540,544,40)],exitX:2680,exitY:420},
+  // 3 العمل السياسي
+  {id:3,bg1:'#2a1a0a',bg2:'#0a0600',w:3000,h:600,reqBoss:false,
+   plats:[mkP(0,560,300,40,'dark'),mkP(330,500,120,20,'wood'),mkP(500,440,120,20,'dark'),mkP(680,380,120,20),mkP(860,460,140,20,'wood'),mkP(1060,400,140,20,'dark'),mkP(1260,340,140,20,'wood'),mkP(1460,440,160,20),mkP(1680,380,140,20,'dark'),mkP(1880,320,140,20,'wood'),mkP(2080,420,160,20),mkP(2300,360,140,20,'dark'),mkP(2500,440,140,20),mkP(2700,480,300,40,'dark')],
+   enemies:[mkE('m3','skeleton',870,400,860,980,3),mkE('m3','bat',1280,270,1100,1400,2),mkE('m3','ghost',1690,320,1500,1800,2),mkE('m3','skeleton',2090,360,2080,2240,3),mkE('m3','bat',2320,290,2100,2500,2)],
+   coins:[mkC(350,460),mkC(530,400),mkC(710,340),mkC(900,420),mkC(1090,360),mkC(1300,300),mkC(1500,400),mkC(1710,340),mkC(1920,280),mkC(2110,380),mkC(2340,320),mkC(2540,400)],
+   spikes:[mkS(450,544,50),mkS(800,544,50),mkS(1200,544,60),mkS(1820,544,60)],exitX:2870,exitY:450},
+  // 4 صراع السلطة
+  {id:4,bg1:'#1a0a00',bg2:'#050200',w:3200,h:700,reqBoss:false,
+   plats:[mkP(0,660,280,40),mkP(300,580,120,20,'wood'),mkP(460,500,120,20,'dark'),mkP(620,580,120,20),mkP(790,500,120,20,'wood'),mkP(960,420,160,20,'dark'),mkP(1180,500,140,20),mkP(1380,420,140,20,'wood'),mkP(1580,340,140,20,'dark'),mkP(1780,420,140,20),mkP(1980,500,140,20,'wood'),mkP(2200,420,160,20,'dark'),mkP(2420,340,160,20),mkP(2640,420,160,20,'wood'),mkP(2880,500,320,40,'dark')],
+   enemies:[mkE('m4','skeleton',470,440,460,570,3),mkE('m4','bat',800,390,620,960,2),mkE('m4','ghost',1390,360,1200,1580,3),mkE('m4','skeleton',1790,360,1780,1970,3),mkE('m4','bat',2210,340,2000,2420,2),mkE('m4','knight',2660,360,2640,2820,4)],
+   coins:[mkC(320,540),mkC(480,460),mkC(640,540),mkC(810,460),mkC(990,380),mkC(1210,460),mkC(1410,380),mkC(1610,300),mkC(1810,380),mkC(2010,460),mkC(2230,380),mkC(2450,300),mkC(2660,380),mkC(2900,460)],
+   spikes:[mkS(250,644,50),mkS(700,644,90),mkS(1140,644,40),mkS(1650,644,80),mkS(2050,644,80)],exitX:3050,exitY:470},
+  // 5 السيطرة
+  {id:5,bg1:'#0a0020',bg2:'#050010',w:3500,h:700,reqBoss:false,
+   plats:[mkP(0,660,240,40,'dark'),mkP(260,580,100,20,'wood'),mkP(400,500,100,20),mkP(540,580,100,20,'dark'),mkP(680,500,100,20,'wood'),mkP(820,420,120,20),mkP(1000,500,120,20,'dark'),mkP(1180,420,120,20,'wood'),mkP(1360,340,120,20),mkP(1540,420,120,20,'dark'),mkP(1720,500,120,20,'wood'),mkP(1900,420,140,20),mkP(2100,340,140,20,'dark'),mkP(2300,420,140,20,'wood'),mkP(2520,340,140,20),mkP(2720,420,140,20,'dark'),mkP(2940,340,140,20,'wood'),mkP(3160,420,140,20),mkP(3280,520,220,40,'dark')],
+   enemies:[mkE('m4','skeleton',830,360,820,960,3),mkE('m4','bat',1010,410,820,1180,2),mkE('m4','ghost',1370,280,1180,1540,3),mkE('m4','skeleton',1910,360,1720,2100,4),mkE('m4','knight',2110,280,2100,2300,4),mkE('m4','bat',2530,270,2300,2720,2),mkE('m4','ghost',2950,270,2720,3160,3),mkE('m4','knight',3170,360,3160,3290,5)],
+   coins:[mkC(280,540),mkC(420,460),mkC(560,540),mkC(700,460),mkC(840,380),mkC(1020,460),mkC(1200,380),mkC(1380,300),mkC(1560,380),mkC(1740,460),mkC(1930,380),mkC(2130,300),mkC(2330,380),mkC(2550,300),mkC(2750,380),mkC(2970,300),mkC(3190,380)],
+   spikes:[mkS(360,644,40),mkS(940,644,60),mkS(1580,644,80),mkS(2200,644,100),mkS(2820,644,120)],exitX:3380,exitY:490},
+  // 6 التصنيع
+  {id:6,bg1:'#1a1200',bg2:'#080500',w:3800,h:700,reqBoss:false,
+   plats:[mkP(0,660,220,40),mkP(240,580,100,20,'dark'),mkP(380,500,100,20,'wood'),mkP(520,420,100,20,'dark'),mkP(660,500,100,20),mkP(800,420,100,20,'wood'),mkP(960,340,120,20,'dark'),mkP(1140,420,120,20),mkP(1320,340,120,20,'wood'),mkP(1500,260,120,20,'dark'),mkP(1680,340,120,20),mkP(1860,420,120,20,'wood'),mkP(2060,340,140,20,'dark'),mkP(2260,260,140,20),mkP(2460,340,140,20,'wood'),mkP(2680,420,140,20,'dark'),mkP(2900,340,160,20),mkP(3120,420,160,20,'wood'),mkP(3360,500,160,20,'dark'),mkP(3560,540,240,40)],
+   enemies:[mkE('m67','skeleton',540,360,380,660,3),mkE('m67','bat',970,250,800,1140,2),mkE('m67','knight',1510,200,1320,1680,5),mkE('m67','ghost',1870,360,1680,2060,3),mkE('m67','skeleton',2280,200,2060,2460,4),mkE('m67','bat',2690,330,2460,2900,3),mkE('m67','knight',2920,280,2900,3120,5),mkE('m67','ghost',3380,440,3120,3560,4)],
+   coins:[mkC(260,540),mkC(400,460),mkC(540,380),mkC(680,460),mkC(820,380),mkC(990,300),mkC(1170,380),mkC(1350,300),mkC(1530,220),mkC(1710,300),mkC(1890,380),mkC(2090,300),mkC(2290,220),mkC(2490,300),mkC(2710,380),mkC(2930,300),mkC(3150,380),mkC(3390,460)],
+   spikes:[mkS(320,644,60),mkS(760,644,60),mkS(1100,644,80),mkS(1780,644,80),mkS(2380,644,80),mkS(3000,644,80)],exitX:3680,exitY:510},
+  // 7 الحرب
+  {id:7,bg1:'#0a0505',bg2:'#000000',w:4200,h:700,reqBoss:false,
+   plats:[mkP(0,660,200,40,'dark'),mkP(220,580,80,20),mkP(340,500,80,20,'dark'),mkP(460,420,80,20,'wood'),mkP(580,340,80,20,'dark'),mkP(700,420,80,20),mkP(840,340,100,20,'dark'),mkP(1000,260,100,20,'wood'),mkP(1160,340,100,20,'dark'),mkP(1340,420,100,20),mkP(1520,340,100,20,'wood'),mkP(1700,260,100,20,'dark'),mkP(1880,340,100,20),mkP(2080,420,120,20,'dark'),mkP(2280,340,120,20,'wood'),mkP(2480,260,120,20,'dark'),mkP(2680,340,120,20),mkP(2900,420,140,20,'wood'),mkP(3120,340,140,20,'dark'),mkP(3360,260,140,20),mkP(3600,340,140,20,'wood'),mkP(3820,420,140,20,'dark'),mkP(4000,500,200,40)],
+   enemies:[mkE('m67','bat',590,270,460,700,3),mkE('m67','skeleton',1010,200,840,1160,4),mkE('m67','ghost',1530,270,1340,1700,4),mkE('m67','knight',1890,280,1700,2080,6),mkE('m67','bat',2290,250,2080,2480,3),mkE('m67','knight',2690,280,2480,2900,6),mkE('m67','ghost',3130,270,2900,3360,4),mkE('m67','skeleton',3610,280,3360,3820,5),mkE('m67','knight',4010,440,4000,4180,7)],
+   coins:[mkC(240,540),mkC(360,460),mkC(480,380),mkC(600,300),mkC(720,380),mkC(860,300),mkC(1020,220),mkC(1180,300),mkC(1360,380),mkC(1540,300),mkC(1720,220),mkC(1900,300),mkC(2100,380),mkC(2300,300),mkC(2500,220),mkC(2700,300),mkC(2920,380),mkC(3140,300),mkC(3380,220),mkC(3620,300)],
+   spikes:[mkS(280,644,60),mkS(620,644,80),mkS(1200,644,80),mkS(1820,644,100),mkS(2400,644,100),mkS(3000,644,100),mkS(3700,644,80)],exitX:4120,exitY:470},
+  // 8 النهاية
+  {id:8,bg1:'#0a0a0a',bg2:'#000000',w:4500,h:700,reqBoss:true,
+   plats:[mkP(0,660,180,40,'dark'),mkP(200,580,70,20,'wood'),mkP(310,500,70,20,'dark'),mkP(420,420,70,20),mkP(530,340,70,20,'dark'),mkP(640,260,70,20,'wood'),mkP(750,340,70,20,'dark'),mkP(880,260,80,20),mkP(1020,180,80,20,'dark'),mkP(1160,260,80,20,'wood'),mkP(1320,340,80,20,'dark'),mkP(1480,260,80,20),mkP(1640,180,80,20,'dark'),mkP(1800,260,100,20,'wood'),mkP(1980,340,100,20,'dark'),mkP(2160,260,100,20),mkP(2360,180,100,20,'dark'),mkP(2560,260,100,20,'wood'),mkP(2760,340,120,20,'dark'),mkP(2980,260,120,20),mkP(3200,180,120,20,'dark'),mkP(3440,260,120,20,'wood'),mkP(3680,340,140,20,'dark'),mkP(3920,260,140,20),mkP(4160,500,340,40,'dark'),mkP(4160,380,80,20),mkP(4420,380,80,20)],
+   enemies:[mkE('m81','knight',1030,120,880,1160,5),mkE('m81','knight',1490,190,1320,1640,5),mkE('m81','knight',1810,200,1640,1980,6),mkE('m81','bat',2170,170,1980,2360,4),mkE('m81','knight',3010,200,2760,3200,6),mkE('m81','skeleton',3460,200,3200,3680,5),mkE('m81','knight',3950,200,3680,4160,7),mkE('m82','boss',4280,400,4170,4460,20,true)],
+   coins:[mkC(220,540),mkC(330,460),mkC(440,380),mkC(550,300),mkC(660,220),mkC(770,300),mkC(900,220),mkC(1040,140),mkC(1180,220),mkC(1340,300),mkC(1500,220),mkC(1660,140),mkC(1820,220),mkC(2000,300),mkC(2180,220),mkC(2380,140),mkC(2580,220),mkC(2780,300),mkC(3000,220),mkC(3220,140),mkC(3460,220),mkC(3700,300),mkC(3940,220),mkC(4200,460)],
+   spikes:[mkS(260,644,50),mkS(720,644,50),mkS(1220,644,80),mkS(1720,644,80),mkS(2200,644,100),mkS(2700,644,100),mkS(3100,644,120),mkS(3500,644,120)],exitX:4470,exitY:470},
+];
+// ─── Physics ─────────────────────────────────────────────────────────────────
+function resolvePlayerPlat(pl,plats){
+  pl.onGround=false;
+  for(const p of plats){
+    if(!overlap(pl.x,pl.y,pl.w,pl.h,p.x,p.y,p.width,p.height))continue;
+    const oL=(pl.x+pl.w)-p.x, oR=(p.x+p.width)-pl.x;
+    const oT=(pl.y+pl.h)-p.y, oB=(p.y+p.height)-pl.y;
+    const mX=Math.min(oL,oR), mY=Math.min(oT,oB);
+    if(mY<mX){
+      if(oT<oB){pl.y=p.y-pl.h;pl.vy=0;pl.onGround=true;}
+      else{pl.y=p.y+p.height;if(pl.vy<0)pl.vy=0;}
+    }else{
+      if(oL<oR){pl.x=p.x-pl.w;}else{pl.x=p.x+p.width;}
+      pl.vx=0;
+    }
+  }
+}
+function resolveEnemyPlat(e,plats){
+  e.onGround=false;
+  for(const p of plats){
+    if(!overlap(e.x,e.y,e.width,e.height,p.x,p.y,p.width,p.height))continue;
+    const oT=(e.y+e.height)-p.y,oB=(p.y+p.height)-e.y;
+    const oL=(e.x+e.width)-p.x,oR=(p.x+p.width)-e.x;
+    const mX=Math.min(oL,oR),mY=Math.min(oT,oB);
+    if(mY<mX){
+      if(oT<oB){e.y=p.y-e.height;e.vy=0;e.onGround=true;}
+      else{e.y=p.y+p.height;if(e.vy<0)e.vy=0;}
+    }else{
+      if(oL<oR){e.x=p.x-e.width;e.vx=Math.abs(e.vx);}
+      else{e.x=p.x+p.width;e.vx=-Math.abs(e.vx);}
+    }
+  }
+}
+// ─── Game State ───────────────────────────────────────────────────────────────
+let G={state:'menu',pl:null,enemies:[],coins:[],lvIdx:0,lv:null,cam:{x:0,y:0},tick:0,lcTimer:0,score:0};
+function mkPlayer(lives=3,score=0,coins=0){
+  return{x:40,y:500,vx:0,vy:0,w:40,h:52,hp:5,maxHp:5,lives,onGround:false,facingRight:true,atkTimer:0,invTimer:0,isAtk:false,score,coins};
+}
+function cloneLv(idx){
+  const src=LEVELS[idx];
+  return{
+    lv:src,
+    enemies:src.enemies.map(e=>({...e})),
+    coins:src.coins.map(c=>({...c})),
+  };
+}
+function startGame(){
+  const {lv,enemies,coins}=cloneLv(0);
+  G={state:'playing',pl:mkPlayer(),enemies,coins,lvIdx:0,lv,cam:{x:0,y:0},tick:0,lcTimer:0,score:0};
+}
+function nextLevel(){
+  const ni=G.lvIdx+1;
+  if(ni>=LEVELS.length){G.state='win';return;}
+  const {lv,enemies,coins}=cloneLv(ni);
+  const old=G.pl;
+  G.pl=mkPlayer(old.lives,old.score,old.coins);
+  G.enemies=enemies;G.coins=coins;G.lv=lv;G.lvIdx=ni;
+  G.cam={x:0,y:0};G.state='playing';G.lcTimer=0;
+}
+function respawn(){
+  const pl=G.pl;
+  pl.x=40;pl.y=500;pl.vx=0;pl.vy=0;pl.hp=pl.maxHp;pl.invTimer=90;
+}
+function takeDmg(amt){
+  const pl=G.pl;
+  if(pl.invTimer>0)return;
+  pl.hp-=amt;pl.invTimer=80;
+  if(pl.hp<=0){
+    pl.hp=0;pl.lives--;
+    if(pl.lives<=0){G.state='gameOver';}else{respawn();}
+  }
+}
+// ─── Input ────────────────────────────────────────────────────────────────────
+const INP={left:false,right:false,jump:false,attack:false,jumpP:false,atkP:false};
+function handleAction(a,down){
+  if(!down){
+    if(a==='left')INP.left=false;
+    if(a==='right')INP.right=false;
+    if(a==='jump')INP.jump=false;
+    if(a==='attack')INP.attack=false;
+    return;
+  }
+  if(G.state!=='playing'){
+    if(a==='jump'){
+      if(G.state==='menu')startGame();
+      else if(G.state==='levelComplete')nextLevel();
+      else if(G.state==='gameOver')startGame();
+      else if(G.state==='win')startGame();
+    }
+    return;
+  }
+  if(a==='left')INP.left=true;
+  if(a==='right')INP.right=true;
+  if(a==='jump'){if(!INP.jump)INP.jumpP=true;INP.jump=true;}
+  if(a==='attack'){if(!INP.attack)INP.atkP=true;INP.attack=true;}
+}
+document.addEventListener('keydown',e=>{
+  if(e.code==='ArrowLeft'||e.code==='KeyA'){handleAction('left',true);e.preventDefault();}
+  if(e.code==='ArrowRight'||e.code==='KeyD'){handleAction('right',true);e.preventDefault();}
+  if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW'){handleAction('jump',true);e.preventDefault();}
+  if(e.code==='KeyZ'||e.code==='KeyX'||e.code==='KeyJ')handleAction('attack',true);
+});
+document.addEventListener('keyup',e=>{
+  if(e.code==='ArrowLeft'||e.code==='KeyA')handleAction('left',false);
+  if(e.code==='ArrowRight'||e.code==='KeyD')handleAction('right',false);
+  if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW')handleAction('jump',false);
+  if(e.code==='KeyZ'||e.code==='KeyX'||e.code==='KeyJ')handleAction('attack',false);
+});
+['btnL','btnR','btnA','btnJ'].forEach(id=>{
+  const el=document.getElementById(id);
+  const act=id==='btnL'?'left':id==='btnR'?'right':id==='btnA'?'attack':'jump';
+  el.addEventListener('touchstart',e=>{e.preventDefault();handleAction(act,true)},{passive:false});
+  el.addEventListener('touchend',e=>{e.preventDefault();handleAction(act,false)},{passive:false});
+  el.addEventListener('mousedown',()=>handleAction(act,true));
+  el.addEventListener('mouseup',()=>handleAction(act,false));
+  el.addEventListener('mouseleave',()=>handleAction(act,false));
+});
+// ─── Update ──────────────────────────────────────────────────────────────────
+function update(){
+  G.tick++;
+  if(G.state!=='playing')return;
+  const pl=G.pl,lv=G.lv;
+  // Move
+  if(INP.left){pl.vx=-MOVE_SPEED;pl.facingRight=false;}
+  else if(INP.right){pl.vx=MOVE_SPEED;pl.facingRight=true;}
+  else{pl.vx*=FRICTION;if(Math.abs(pl.vx)<0.1)pl.vx=0;}
+  // Jump
+  if((INP.jump||INP.jumpP)&&pl.onGround){pl.vy=JUMP_FORCE;pl.onGround=false;}
+  INP.jumpP=false;
+  // Attack
+  if(INP.atkP&&pl.atkTimer<=0){pl.isAtk=true;pl.atkTimer=22;INP.atkP=false;}
+  if(pl.atkTimer>0){pl.atkTimer--;pl.isAtk=pl.atkTimer>6;}else pl.isAtk=false;
+  pl.vy+=GRAVITY;if(pl.vy>18)pl.vy=18;
+  pl.x+=pl.vx;pl.y+=pl.vy;
+  resolvePlayerPlat(pl,lv.plats);
+  if(pl.x<0){pl.x=0;pl.vx=0;}
+  if(pl.x+pl.w>lv.w){pl.x=lv.w-pl.w;pl.vx=0;}
+  if(pl.invTimer>0)pl.invTimer--;
+  // Spikes
+  for(const s of lv.spikes){
+    if(overlap(pl.x+4,pl.y+4,pl.w-8,pl.h-8,s.x,s.y,s.width,s.height))takeDmg(10);
+  }
+  // Fall
+  if(pl.y>lv.h+50)takeDmg(10);
+  // Enemies
+  for(const e of G.enemies){
+    if(e.dead)continue;
+    updateEnemy(e,lv);
+    const dmg=e.isBoss?2:1;
+    if(pl.invTimer<=0&&overlap(pl.x+4,pl.y+4,pl.w-8,pl.h-8,e.x,e.y,e.width,e.height))takeDmg(dmg);
+    if(pl.isAtk){
+      const ar=e.isBoss?60:48;
+      const ax=pl.facingRight?pl.x+pl.w:pl.x-ar;
+      if(overlap(ax,pl.y+4,ar,pl.h-8,e.x,e.y,e.width,e.height)&&e.stunTimer<=15){
+        e.hp--;e.stunTimer=20;e.vx=pl.facingRight?2:-2;pl.score+=10;
+        if(e.hp<=0){e.dead=true;pl.score+=e.isBoss?500:50;}
+      }
+    }
+  }
+  // Coins
+  for(const c of G.coins){
+    if(!c.collected&&overlap(pl.x+4,pl.y+4,pl.w-8,pl.h-8,c.x,c.y,16,16)){
+      c.collected=true;pl.coins++;pl.score+=20;
+    }
+  }
+  // Exit
+  const boss=G.enemies.find(e=>e.isBoss&&!e.dead);
+  const blocked=lv.reqBoss&&boss;
+  if(!blocked&&overlap(pl.x,pl.y,pl.w,pl.h,lv.exitX-22,lv.exitY-65,44,75)){
+    G.lcTimer++;if(G.lcTimer>30){G.state='levelComplete';G.lcTimer=0;}
+  }else if(G.lcTimer>0)G.lcTimer--;
+  // Camera
+  const tx=pl.x+pl.w/2-CW/2,ty=pl.y+pl.h/2-CH/2;
+  G.cam.x+=(tx-G.cam.x)*0.12;G.cam.y+=(ty-G.cam.y)*0.12;
+  G.cam.x=Math.max(0,Math.min(lv.w-CW,G.cam.x));
+  G.cam.y=Math.max(0,Math.min(lv.h-CH,G.cam.y));
+}
+function updateEnemy(e,lv){
+  if(e.stunTimer>0){
+    e.stunTimer--;e.vx*=0.7;
+    if(e.type!=='bat'&&e.type!=='ghost'){e.vy+=GRAVITY;e.y+=e.vy;resolveEnemyPlat(e,lv.plats);}
+    return;
+  }
+  const spd=e.isBoss?2.0:e.type==='knight'?1.2:e.type==='bat'?1.8:e.type==='ghost'?1.3:1.4;
+  if(e.type==='bat'||e.type==='ghost'){
+    e.vx=e.facingRight?spd:-spd;
+    if(e.x+e.width>=e.pr)e.facingRight=false;
+    else if(e.x<=e.pl)e.facingRight=true;
+    e.vy=Math.sin(G.tick/20)*1.8;
+  }else{
+    if(e.x+e.width>=e.pr){e.facingRight=false;e.vx=-spd;}
+    else if(e.x<=e.pl){e.facingRight=true;e.vx=spd;}
+    if(e.isBoss&&G.tick%200<30)e.vx*=2.5;
+    e.vy+=GRAVITY;e.y+=e.vy;resolveEnemyPlat(e,lv.plats);
+  }
+  e.x+=e.vx;
+  if(e.x<0){e.x=0;e.vx=Math.abs(e.vx);}
+  if(e.x+e.width>lv.w){e.x=lv.w-e.width;e.vx=-Math.abs(e.vx);}
+}
+// ─── Rendering ────────────────────────────────────────────────────────────────
+const canvas=document.getElementById('gc');
+const ctx=canvas.getContext('2d');
+ctx.imageSmoothingEnabled=false;
+const PLAT_C={
+  stone:{top:'#8B7355',wall:'#6B5335',line:'#4B3315'},
+  wood:{top:'#C8A06A',wall:'#A0784A',line:'#80582A'},
+  dark:{top:'#5A4A6A',wall:'#3A2A4A',line:'#1A0A2A'},
+};
+function drawBg(camX,color1,color2){
+  const g=ctx.createLinearGradient(0,0,0,CH);
+  g.addColorStop(0,color1);g.addColorStop(1,color2);
+  ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);
+  ctx.fillStyle='rgba(255,255,255,0.55)';
+  for(let i=0;i<60;i++){
+    const sx=(i*137)%CW,sy=(i*97)%(CH*0.65);
+    ctx.fillRect(sx,sy,i%5===0?2:1,i%5===0?2:1);
+  }
+  const p=(camX*0.15)%CW;
+  ctx.fillStyle='rgba(20,15,40,0.8)';
+  for(let i=0;i<8;i++){
+    const bx=((i*300-p)%(CW+100)+CW+100)%(CW+100)-50;
+    const bh=80+(i*73)%120,bw=50+(i*43)%60;
+    ctx.fillRect(px(bx),CH-bh,px(bw),bh);
+    ctx.fillStyle='rgba(200,180,50,0.22)';
+    for(let wy=10;wy<bh-10;wy+=18)for(let wx=8;wx<bw-8;wx+=16)if((i+wy+wx)%3!==0)ctx.fillRect(px(bx+wx),CH-bh+wy,8,10);
+    ctx.fillStyle='rgba(20,15,40,0.8)';
+  }
+}
+function drawPlat(x,y,w,h,type){
+  const c=PLAT_C[type]||PLAT_C.stone;
+  ctx.fillStyle=c.wall;ctx.fillRect(px(x),px(y),px(w),px(h));
+  ctx.fillStyle=c.top;ctx.fillRect(px(x),px(y),px(w),6);
+  ctx.fillStyle=c.line;
+  for(let tx=0;tx<w;tx+=20)ctx.fillRect(px(x+tx),px(y+6),2,h-6);
+  for(let ty=8;ty<h;ty+=12)ctx.fillRect(px(x),px(y+ty),w,1);
+  ctx.fillStyle='rgba(255,255,255,0.1)';ctx.fillRect(px(x),px(y),2,h);
+}
+function drawSpike(x,y,w){
+  const sw=16;
+  for(let sx=0;sx<w;sx+=sw){
+    ctx.fillStyle='#888';
+    ctx.beginPath();ctx.moveTo(px(x+sx),px(y+16));ctx.lineTo(px(x+sx+sw/2),px(y));ctx.lineTo(px(x+sx+sw),px(y+16));ctx.closePath();ctx.fill();
+    ctx.fillStyle='#bbb';ctx.fillRect(px(x+sx+sw/2-1),px(y),2,3);
+  }
+}
+function drawExit(x,y,locked){
+  const t=G.tick,gl=Math.sin(t*0.05)*0.3+0.7;
+  const clr=locked?'#AA2200':'#3A1A5A',inner=locked?'#CC3300':'#6A3A9A';
+  ctx.fillStyle=clr;ctx.fillRect(px(x-22),px(y-65),44,75);
+  ctx.fillStyle=inner;ctx.fillRect(px(x-18),px(y-61),36,67);
+  ctx.fillStyle=locked?\`rgba(220,80,20,\${gl*0.5})\`:\`rgba(160,80,255,\${gl*0.4})\`;
+  ctx.fillRect(px(x-14),px(y-58),28,60);
+  if(!locked){ctx.fillStyle=\`rgba(200,150,255,\${gl*0.7})\`;ctx.fillRect(px(x-8),px(y-44),16,32);}
+  ctx.fillStyle=locked?'#FF4400':'#FFCC44';ctx.fillRect(px(x-6),px(y-72),12,9);
+  if(locked){ctx.fillStyle='#FF6622';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.fillText('BOSS!',x,y-80);ctx.textAlign='left';}
+}
+function drawCoin(cx,cy){
+  const bob=Math.sin(G.tick*0.1+cx*0.01)*3;
+  const gl=Math.sin(G.tick*0.08)*0.2+0.8;
+  ctx.fillStyle=\`rgba(255,220,0,\${gl*0.3})\`;ctx.fillRect(px(cx-10),px(cy-10+bob),20,20);
+  ctx.fillStyle='#FFCC00';ctx.fillRect(px(cx-6),px(cy-8+bob),12,16);ctx.fillRect(px(cx-8),px(cy-4+bob),16,8);
+  ctx.fillStyle='#FFE866';ctx.fillRect(px(cx-4),px(cy-6+bob),4,8);
+}
+function drawSprite(key,x,y,w,h,flipX){
+  const img=getImg(key);
+  if(!img.complete||img.naturalWidth===0)return;
+  ctx.save();
+  if(flipX){ctx.translate(px(x+w),px(y));ctx.scale(-1,1);ctx.drawImage(img,0,0,px(w),px(h));}
+  else ctx.drawImage(img,px(x),px(y),px(w),px(h));
+  ctx.restore();
+}
+function drawPlayer(){
+  const pl=G.pl,lv=G.lv;
+  if(pl.invTimer>0&&Math.floor(pl.invTimer/4)%2===0)return;
+  const sk=PLAYER_SPRITES[lv.id]||'s1';
+  const bob=Math.sin(G.tick*0.12)*1.5;
+  if(pl.isAtk){
+    ctx.save();ctx.globalAlpha=0.3;ctx.fillStyle='#CCDDFF';
+    const ax=pl.facingRight?pl.x+pl.w:pl.x-50;ctx.fillRect(px(ax),px(pl.y),50,pl.h);ctx.restore();
+  }
+  const sh=pl.h+10,sw=(sh/1.6)|0,ox=(pl.w-sw)/2;
+  drawSprite(sk,pl.x+ox,pl.y-4+bob,sw,sh,!pl.facingRight);
+}
+function drawEnemy(e){
+  if(e.dead)return;
+  const bob=Math.sin(G.tick*0.08+e.x*0.01)*2;
+  ctx.save();
+  if(e.stunTimer>0)ctx.globalAlpha=0.5+Math.sin(G.tick*0.6)*0.5;
+  const sk=ENEMY_SPRITES[e.sk]||e.sk;
+  const sw=e.width+(e.isBoss?20:8),sh=e.height+(e.isBoss?24:10),ox=(sw-e.width)/2;
+  drawSprite(sk,e.x-ox,e.y-10+bob,sw,sh,!e.facingRight);
+  if(e.isBoss){
+    ctx.globalAlpha=(ctx.globalAlpha)*(Math.sin(G.tick*0.05)*0.2+0.3);
+    ctx.strokeStyle='#FF3300';ctx.lineWidth=3;
+    ctx.strokeRect(px(e.x-4),px(e.y-4+bob),e.width+8,e.height+8);
+  }
+  ctx.restore();
+  if(e.hp<e.maxHp){
+    const bw=e.isBoss?e.width+20:e.width,bx=e.isBoss?e.x-10:e.x;
+    const bf=(e.hp/e.maxHp)*bw;
+    ctx.fillStyle='#1A0000';ctx.fillRect(px(bx),px(e.y-10),px(bw),6);
+    ctx.fillStyle=e.isBoss?'#FF2200':'#CC2222';ctx.fillRect(px(bx),px(e.y-10),px(bf),6);
+    ctx.fillStyle=e.isBoss?'#FF6644':'#FF4444';ctx.fillRect(px(bx),px(e.y-10),px(bf),2);
+  }
+}
+function drawHUD(){
+  const pl=G.pl,lv=G.lv;
+  ctx.fillStyle='rgba(0,0,0,0.65)';ctx.fillRect(8,8,170,30);
+  ctx.fillStyle='#1A0000';ctx.fillRect(10,16,164,14);
+  const hf=(pl.hp/pl.maxHp)*164;
+  ctx.fillStyle=pl.hp>pl.maxHp*0.5?'#CC2222':pl.hp>pl.maxHp*0.25?'#FF8800':'#FF2200';
+  ctx.fillRect(10,16,hf,14);ctx.fillStyle='#FF6666';ctx.fillRect(10,16,hf,5);
+  ctx.fillStyle='#FFF';ctx.font='bold 11px monospace';ctx.fillText(\`HP \${pl.hp}/\${pl.maxHp}\`,186,26);
+  ctx.fillStyle='#FFF';ctx.font='bold 12px monospace';ctx.fillText(\`❤ \${pl.lives}\`,10,52);
+  ctx.fillStyle='#FFD700';ctx.fillText(\`⭐ \${pl.score}\`,80,52);
+  ctx.fillStyle='#FFCC00';ctx.fillText(\`◈ \${pl.coins}\`,200,52);
+  const name=LEVEL_NAMES[lv.id]||\`Level \${lv.id}\`;
+  ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(CW-200,8,192,24);
+  ctx.fillStyle='#AA88FF';ctx.font='bold 12px monospace';ctx.textAlign='right';
+  ctx.fillText(\`\${lv.id}/8 — \${name}\`,CW-10,24);ctx.textAlign='left';
+  // Boss bar
+  const boss=G.enemies.find(e=>e.isBoss);
+  if(boss&&!boss.dead){
+    const bw=320,bx=(CW-bw)/2;
+    ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(bx-4,6,bw+8,28);
+    ctx.fillStyle='#3A0000';ctx.fillRect(bx,12,bw,16);
+    const bf=(boss.hp/boss.maxHp)*bw;
+    ctx.fillStyle='#CC0000';ctx.fillRect(bx,12,bf,16);
+    ctx.fillStyle='#FF4422';ctx.fillRect(bx,12,bf,6);
+    ctx.fillStyle='#FFAA00';ctx.font='bold 11px monospace';ctx.textAlign='center';
+    ctx.fillText(\`👑 الزعيم النازي \${boss.hp}/\${boss.maxHp}\`,CW/2,26);ctx.textAlign='left';
+  }
+}
+function drawGame(){
+  const lv=G.lv,pl=G.pl;
+  ctx.clearRect(0,0,CW,CH);
+  drawBg(G.cam.x,lv.bg1,lv.bg2);
+  ctx.save();ctx.translate(-px(G.cam.x),-px(G.cam.y));
+  for(const p of lv.plats)drawPlat(p.x,p.y,p.width,p.height,p.type);
+  for(const s of lv.spikes)drawSpike(s.x,s.y,s.width);
+  const boss=G.enemies.find(e=>e.isBoss&&!e.dead);
+  drawExit(lv.exitX,lv.exitY,!!(lv.reqBoss&&boss));
+  for(const c of G.coins)if(!c.collected)drawCoin(c.x+8,c.y+8);
+  for(const e of G.enemies)if(!e.dead)drawEnemy(e);
+  drawPlayer();
+  ctx.restore();
+  drawHUD();
+}
+function drawMenu(){
+  const t=G.tick;
+  const g=ctx.createLinearGradient(0,0,0,CH);
+  g.addColorStop(0,'#0a0020');g.addColorStop(1,'#1a0530');
+  ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);
+  ctx.fillStyle='rgba(255,255,255,0.5)';
+  for(let i=0;i<80;i++){ctx.fillRect((i*137)%CW,(i*97)%(CH*0.8),i%7===0?2:1,i%7===0?2:1);}
+  ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(CW/2-230,CH/2-130,460,90);
+  ctx.textAlign='center';
+  ctx.fillStyle='#CC88FF';ctx.font='bold 56px monospace';ctx.fillText('DARK',CW/2-66,CH/2-60);
+  ctx.fillStyle='#FFF';ctx.fillText('BLADE',CW/2+80,CH/2-60);
+  ctx.fillStyle='#AA66DD';ctx.font='13px monospace';ctx.fillText('ستالين — رحلة من الطفولة إلى النصر النهائي',CW/2,CH/2-22);
+  if(Math.sin(t*0.08)>0){ctx.fillStyle='#FFD700';ctx.font='bold 18px monospace';ctx.fillText('PRESS SPACE / TAP TO START',CW/2,CH/2+32);}
+  ctx.fillStyle='rgba(0,0,0,0.45)';ctx.fillRect(CW/2-290,CH/2+50,580,90);
+  ctx.fillStyle='#AA88CC';ctx.font='12px monospace';ctx.fillText('KEYBOARD: ← → MOVE   SPACE/↑ JUMP   Z/X ATTACK',CW/2,CH/2+75);
+  ctx.fillStyle='#FFF';ctx.fillText('MOBILE: ◀ ▶ MOVE   JUMP   ATCK',CW/2,CH/2+100);
+  ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(CW/2-290,CH/2+128,580,26);
+  ctx.fillStyle='#FFDD44';ctx.font='10px monospace';
+  ctx.fillText('1.الطفولة ← 2.الثورة ← 3.السياسة ← 4.السلطة ← 5.السيطرة ← 6.التصنيع ← 7.الحرب ← 8.النهاية',CW/2,CH/2+145);
+  ctx.textAlign='left';
+}
+function drawLvComplete(){
+  ctx.fillStyle='rgba(0,0,0,0.72)';ctx.fillRect(0,0,CW,CH);
+  ctx.textAlign='center';
+  ctx.fillStyle='#FFD700';ctx.font='bold 42px monospace';ctx.fillText('مرحلة مكتملة!',CW/2,CH/2-40);
+  ctx.fillStyle='#FFF';ctx.font='20px monospace';
+  const n=LEVEL_NAMES[G.lv.id]||G.lv.id;
+  ctx.fillText(\`\${G.lv.id} — \${n}\`,CW/2,CH/2);
+  if(G.lv.id<8){ctx.fillStyle='#AA88FF';ctx.font='14px monospace';ctx.fillText(\`التالية: \${LEVEL_NAMES[G.lv.id+1]||''}\`,CW/2,CH/2+30);}
+  if(Math.sin(G.tick*0.1)>0){ctx.fillStyle='#88FFCC';ctx.font='16px monospace';ctx.fillText('SPACE / TAP TO CONTINUE',CW/2,CH/2+62);}
+  ctx.textAlign='left';
+}
+function drawGameOver(){
+  ctx.fillStyle='rgba(0,0,0,0.82)';ctx.fillRect(0,0,CW,CH);
+  ctx.textAlign='center';ctx.fillStyle='#FF3333';ctx.font='bold 52px monospace';ctx.fillText('GAME OVER',CW/2,CH/2-30);
+  if(Math.sin(G.tick*0.1)>0){ctx.fillStyle='#FFF';ctx.font='16px monospace';ctx.fillText('SPACE / TAP TO RETRY',CW/2,CH/2+30);}
+  ctx.textAlign='left';
+}
+function drawWin(){
+  const g=ctx.createLinearGradient(0,0,0,CH);
+  g.addColorStop(0,'#1a0040');g.addColorStop(1,'#400020');
+  ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);
+  for(let i=0;i<40;i++){
+    const sx=(i*137+G.tick*2)%CW,sy=(i*97+G.tick)%CH,sz=(Math.sin(i+G.tick*0.05)+1)*3;
+    ctx.fillStyle=i%2===0?'#FFD700':'#FF4444';ctx.fillRect(px(sx),px(sy),px(sz),px(sz));
+  }
+  ctx.textAlign='center';
+  ctx.fillStyle='#FFD700';ctx.font='bold 48px monospace';ctx.fillText('انتصر ستالين!',CW/2,CH/2-70);
+  ctx.fillStyle='#CC88FF';ctx.font='20px monospace';ctx.fillText('تم إسقاط الزعيم النازي!',CW/2,CH/2-20);
+  ctx.fillStyle='#FFCC44';ctx.font='18px monospace';ctx.fillText(\`النتيجة النهائية: \${G.pl?G.pl.score:0}\`,CW/2,CH/2+20);
+  if(Math.sin(G.tick*0.1)>0){ctx.fillStyle='#88FFCC';ctx.font='15px monospace';ctx.fillText('SPACE / TAP TO PLAY AGAIN',CW/2,CH/2+68);}
+  ctx.textAlign='left';
+}
+// ─── Loop ─────────────────────────────────────────────────────────────────────
+function loop(){
+  update();
+  if(G.state==='menu')drawMenu();
+  else if(G.state==='playing'){drawGame();}
+  else if(G.state==='levelComplete'){drawGame();drawLvComplete();}
+  else if(G.state==='gameOver')drawGameOver();
+  else if(G.state==='win')drawWin();
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>`;
+fs.writeFileSync('/home/runner/workspace/darkblade-game.html', html);
+const size = fs.statSync('/home/runner/workspace/darkblade-game.html').size;
+console.log('File written:', (size/1024).toFixed(0), 'KB');
