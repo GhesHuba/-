@@ -383,30 +383,34 @@ for (let i = 1; i <= NUM_LEVELS; i++) {
     stone:{top:'#8B7355',wall:'#6B5335',line:'#4B3315'},
     wood:{top:'#C8A06A',wall:'#A0784A',line:'#80582A'},
     dark:{top:'#5A4A6A',wall:'#3A2A4A',line:'#1A0A2A'},
-  };function drawBg(camX, color1, color2) {
+function drawBg(camX, color1, color2) {
     const lvId = (G.lv && G.lv.id) ? G.lv.id : 1;
-    const idx = Math.floor(G.tick / 60) % BG_IMG_COUNT;
-    const bgImg = (levelBgImgs[lvId] && levelBgImgs[lvId][idx]) ? levelBgImgs[lvId][idx] : null;
-    if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
-        ctx.drawImage(bgImg, 0, 0, bgWidth, bgHeight);
+    const bg1 = (levelBgImgs[lvId] && levelBgImgs[lvId][0]) ? levelBgImgs[lvId][0] : null;
+    const bg2 = (levelBgImgs[lvId] && levelBgImgs[lvId][1]) ? levelBgImgs[lvId][1] : null;
+
+    // سرعة تحرك الخلفية (اجعلها أقل من 1 لتعطي إيحاء بالعمق)
+    const scrollSpeed = 0.5; 
+    // حساب موقع البداية بحيث تتكرر الخلفية كلما قطع اللاعب مسافة عرضها
+    let xPos = -(camX * scrollSpeed) % bgWidth;
+
+    if (bg1 && bg1.complete && bg2 && bg2.complete) {
+        // رسم الصورة الأولى في موقعها الحالي
+        ctx.drawImage(bg1, xPos, 0, bgWidth, bgHeight);
+        
+        // رسم الصورة الثانية مباشرة بعد الأولى (إلى يمينها)
+        ctx.drawImage(bg2, xPos + bgWidth, 0, bgWidth, bgHeight);
+        
+        // رسم نسخة إضافية من الأولى بعد الثانية لضمان عدم وجود فراغ أسود عند الحركة المستمرة
+        if (xPos + bgWidth < CW) {
+            ctx.drawImage(bg1, xPos + (bgWidth * 2), 0, bgWidth, bgHeight);
+        }
     } else {
-        const g = ctx.createLinearGradient(0,0,0,bgHeight);
-        g.addColorStop(0, color1); g.addColorStop(1, color2);
+        // الرسم الافتراضي في حال فشل تحميل الصور
+        const g = ctx.createLinearGradient(0, 0, 0, bgHeight);
+        g.addColorStop(0, color1);
+        g.addColorStop(1, color2);
         ctx.fillStyle = g;
-        ctx.fillRect(0, 0, bgWidth, bgHeight);
-    }
-    // جبال في المقدمة
-    const p=(camX*0.15)%CW;
-    ctx.fillStyle='rgba(20,15,40,0.8)';
-    for(let i=0;i<8;i++){
-      const bx=((i*300-p)%(CW+100)+CW+100)%(CW+100)-50;
-      const bh=80+(i*73)%120,bw=50+(i*43)%60;
-      ctx.fillRect(px(bx),CH-bh,px(bw),bh);
-      ctx.fillStyle='rgba(200,180,50,0.22)';
-      for(let wy=10;wy<bh-10;wy+=18)
-        for(let wx=8;wx<bw-8;wx+=16)
-          if((i+wy+wx)%3!==0)ctx.fillRect(px(bx+wx),CH-bh+wy,8,10);
-      ctx.fillStyle='rgba(20,15,40,0.8)';
+        ctx.fillRect(0, 0, CW, CH);
     }
 }
     
