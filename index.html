@@ -155,7 +155,7 @@ for (let i = 1; i <= NUM_LEVELS; i++) {
   for (let j = 0; j < BG_IMG_COUNT; j++) {
     const name = j === 0 ? `g${i}.png` : `g${i}.1.png`;
     const img = new Image();
-    img.src = `images/${name}`;
+    img.src = name;
     levelBgImgs[i].push(img);
   }
 }
