@@ -383,40 +383,35 @@ for (let i = 1; i <= NUM_LEVELS; i++) {
     stone:{top:'#8B7355',wall:'#6B5335',line:'#4B3315'},
     wood:{top:'#C8A06A',wall:'#A0784A',line:'#80582A'},
     dark:{top:'#5A4A6A',wall:'#3A2A4A',line:'#1A0A2A'},
+function drawBg(camX, color1, color2) {
+    // التأكد من وجود عرض للخلفية، إذا لم تكن معرفة نستخدم عرض الشاشة CW
+    const _bw = (typeof bgWidth !== 'undefined') ? bgWidth : CW;
+    const _bh = (typeof bgHeight !== 'undefined') ? bgHeight : CH;
 
-  function drawBg(camX, color1, color2) {
     const lvId = (G.lv && G.lv.id) ? G.lv.id : 1;
-    const bgImages = levelBgImgs[lvId];
+    const bg1 = (levelBgImgs[lvId] && levelBgImgs[lvId][0]) ? levelBgImgs[lvId][0] : null;
+    const bg2 = (levelBgImgs[lvId] && levelBgImgs[lvId][1]) ? levelBgImgs[lvId][1] : null;
 
-    if (bgImages && bgImages.length >= 2) {
-        const bg1 = bgImages[0];
-        const bg2 = bgImages[1];
-
-        // سرعة تحرك الخلفية (0.5 تعني أبطأ من اللاعب لإعطاء عمق)
+    if (bg1 && bg1.complete && bg2 && bg2.complete) {
         const scrollSpeed = 0.5; 
+        const totalWidth = _bw * 2; 
         
-        // حساب الإزاحة (نستخدم العرض الكلي للصورتين معاً)
-        const totalWidth = bgWidth * 2;
-        let xOffset = -(camX * scrollSpeed) % totalWidth;
+        // حساب الإزاحة
+        let x = -(camX * scrollSpeed) % totalWidth;
 
-        // التأكد من أن xOffset دائماً سالب لضمان الاستمرارية
-        if (xOffset > 0) xOffset -= totalWidth;
-
-        // رسم الصورة الأولى
-        if (bg1.complete) {
-            ctx.drawImage(bg1, xOffset, 0, bgWidth, bgHeight);
-            // رسم نسخة ثانية من bg1 إذا ظهر فراغ في النهاية
-            ctx.drawImage(bg1, xOffset + totalWidth, 0, bgWidth, bgHeight);
+        // رسم دورتين لضمان تغطية الشاشة بالكامل أثناء الحركة
+        for (let i = 0; i < 2; i++) {
+            let offset = x + (i * totalWidth);
+            
+            // رسم الصورة الأولى
+            ctx.drawImage(bg1, offset, 0, _bw, _bh);
+            
+            // رسم الصورة الثانية ملتصقة بها
+            ctx.drawImage(bg2, offset + _bw, 0, _bw, _bh);
         }
-
-        // رسم الصورة الثانية ملتصقة بالأولى تماماً
-        if (bg2.complete) {
-            ctx.drawImage(bg2, xOffset + bgWidth, 0, bgWidth, bgHeight);
-        }
-
     } else {
-        // في حال عدم وجود صور، ارسم التدرج الافتراضي
-        const g = ctx.createLinearGradient(0, 0, 0, bgHeight);
+        // حالة احتياطية باللون المتدرج
+        const g = ctx.createLinearGradient(0, 0, 0, CH);
         g.addColorStop(0, color1);
         g.addColorStop(1, color2);
         ctx.fillStyle = g;
