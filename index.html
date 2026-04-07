@@ -384,33 +384,33 @@ for (let i = 1; i <= NUM_LEVELS; i++) {
     wood:{top:'#C8A06A',wall:'#A0784A',line:'#80582A'},
     dark:{top:'#5A4A6A',wall:'#3A2A4A',line:'#1A0A2A'},
 function drawBg(camX, color1, color2) {
-    // التأكد من وجود عرض للخلفية، إذا لم تكن معرفة نستخدم عرض الشاشة CW
-    const _bw = (typeof bgWidth !== 'undefined') ? bgWidth : CW;
-    const _bh = (typeof bgHeight !== 'undefined') ? bgHeight : CH;
+    // استخدام عرض الشاشة كبديل في حال عدم تعريف bgWidth
+    const _w = (typeof bgWidth !== 'undefined') ? bgWidth : CW;
+    const _h = (typeof bgHeight !== 'undefined') ? bgHeight : CH;
 
     const lvId = (G.lv && G.lv.id) ? G.lv.id : 1;
     const bg1 = (levelBgImgs[lvId] && levelBgImgs[lvId][0]) ? levelBgImgs[lvId][0] : null;
     const bg2 = (levelBgImgs[lvId] && levelBgImgs[lvId][1]) ? levelBgImgs[lvId][1] : null;
 
     if (bg1 && bg1.complete && bg2 && bg2.complete) {
-        const scrollSpeed = 0.5; 
-        const totalWidth = _bw * 2; 
+        const scrollSpeed = 0.5; // سرعة حركة الخلفية
+        const totalWidth = _w * 2; // عرض الصورتين معاً
         
-        // حساب الإزاحة
-        let x = -(camX * scrollSpeed) % totalWidth;
+        // حساب موقع البداية بناءً على حركة الكاميرا
+        let xOffset = -(camX * scrollSpeed) % totalWidth;
 
-        // رسم دورتين لضمان تغطية الشاشة بالكامل أثناء الحركة
+        // رسم دورتين متتاليتين لضمان عدم وجود فراغات أثناء الحركة
         for (let i = 0; i < 2; i++) {
-            let offset = x + (i * totalWidth);
+            let startX = xOffset + (i * totalWidth);
             
             // رسم الصورة الأولى
-            ctx.drawImage(bg1, offset, 0, _bw, _bh);
+            ctx.drawImage(bg1, startX, 0, _w, _h);
             
-            // رسم الصورة الثانية ملتصقة بها
-            ctx.drawImage(bg2, offset + _bw, 0, _bw, _bh);
+            // رسم الصورة الثانية ملتصقة تماماً بنهاية الأولى
+            ctx.drawImage(bg2, startX + _w, 0, _w, _h);
         }
     } else {
-        // حالة احتياطية باللون المتدرج
+        // خلفية احتياطية (تدرج لوني) في حال لم يتم تحميل الصور
         const g = ctx.createLinearGradient(0, 0, 0, CH);
         g.addColorStop(0, color1);
         g.addColorStop(1, color2);
