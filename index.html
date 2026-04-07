@@ -37,8 +37,9 @@
     window.imgs = {}; 
 
     // 2. ثم تأكد أن تعريفات الصور تستخدم window.imgs
-    window.imgs['s1'] = getImg('g1');
-    window.imgs['s8'] = getImg('g8');
+// التعديل الصحيح داخل سكريبت الـ Module
+window.imgs['s1'] = getImg('s1'); // الشخصية الأولى
+window.imgs['s8'] = getImg('s8'); // خلفية الجبال
 
     // 3. أبعاد الخلفية أيضاً
     window.bgWidth = 1920;
@@ -62,13 +63,14 @@
 let camX = 0;
   // ─── Sprite Cache ───────────────────────────────────────────────────────────
   const imgCache = {};
-  function getImg(key) {
+function getImg(key) {
     if (imgCache[key]) return imgCache[key];
     const img = new Image();
-    img.src = SPRITE_DATA[key];
+    // يجب أن يكون SPRITE_DATA[key] موجوداً فعلياً
+    img.src = SPRITE_DATA[key]; 
     imgCache[key] = img;
     return img;
-  }
+}
   // Preload all
   Object.keys(SPRITE_DATA).forEach(k => getImg(k));
 
