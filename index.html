@@ -19,7 +19,7 @@
   </head>
   <body>
   <div id="root">
-    <canvas id="gc" width="960" height="540"></canvas>
+   <canvas id="gc" width="1800" height="560"></canvas>
     <div id="controls">
       <div style="display:flex;gap:10px">
         <div class="btn btn-move" id="btnL">◀</div>
@@ -144,7 +144,21 @@
      coins:[mkC(220,540),mkC(330,460),mkC(440,380),mkC(550,300),mkC(660,220),mkC(770,300),mkC(900,220),mkC(1040,140),mkC(1180,220),mkC(1340,300),mkC(1500,220),mkC(1660,140),mkC(1820,220),mkC(2000,300),mkC(2180,220),mkC(2380,140),mkC(2580,220),mkC(2780,300),mkC(3000,220),mkC(3220,140),mkC(3460,220),mkC(3700,300),mkC(3940,220),mkC(4200,460)],
      spikes:[mkS(260,644,50),mkS(720,644,50),mkS(1220,644,80),mkS(1720,644,80),mkS(2200,644,100),mkS(2700,644,100),mkS(3100,644,120),mkS(3500,644,120)],exitX:4470,exitY:470},
   ];
-
+const CW = 1800;  // عرض الخلفية والصورة
+const CH = 560;   // ارتفاع الخلفية والصورة
+const bgWidth = 1800;
+const bgHeight = 560;const BG_IMG_COUNT = 2;
+const NUM_LEVELS = 8; // حسب عدد المراحل لديك
+const levelBgImgs = {};
+for (let i = 1; i <= NUM_LEVELS; i++) {
+  levelBgImgs[i] = [];
+  for (let j = 0; j < BG_IMG_COUNT; j++) {
+    const name = j === 0 ? `g${i}.png` : `g${i}.1.png`;
+    const img = new Image();
+    img.src = `images/${name}`;
+    levelBgImgs[i].push(img);
+  }
+}
   // ─── Physics ─────────────────────────────────────────────────────────────────
   function resolvePlayerPlat(pl,plats){
     pl.onGround=false;
@@ -370,16 +384,19 @@
     wood:{top:'#C8A06A',wall:'#A0784A',line:'#80582A'},
     dark:{top:'#5A4A6A',wall:'#3A2A4A',line:'#1A0A2A'},
   };
-
-  function drawBg(camX,color1,color2){
-    const g=ctx.createLinearGradient(0,0,0,CH);
-    g.addColorStop(0,color1);g.addColorStop(1,color2);
-    ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);
-    ctx.fillStyle='rgba(255,255,255,0.55)';
-    for(let i=0;i<60;i++){
-      const sx=(i*137)%CW,sy=(i*97)%(CH*0.65);
-      ctx.fillRect(sx,sy,i%5===0?2:1,i%5===0?2:1);
+function drawBg(camX, color1, color2) {
+    const lvId = (G.lv && G.lv.id) ? G.lv.id : 1;
+    const idx = Math.floor(G.tick / 60) % BG_IMG_COUNT;
+    const bgImg = (levelBgImgs[lvId] && levelBgImgs[lvId][idx]) ? levelBgImgs[lvId][idx] : null;
+    if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
+        ctx.drawImage(bgImg, 0, 0, bgWidth, bgHeight);
+    } else {
+        const g = ctx.createLinearGradient(0,0,0,bgHeight);
+        g.addColorStop(0, color1); g.addColorStop(1, color2);
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, bgWidth, bgHeight);
     }
+}
     const p=(camX*0.15)%CW;
     ctx.fillStyle='rgba(20,15,40,0.8)';
     for(let i=0;i<8;i++){
