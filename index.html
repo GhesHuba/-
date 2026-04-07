@@ -32,16 +32,36 @@
       </div>
     </div>
   </div>
- <script type="module">
-    // 1. أضف هذا السطر هنا في البداية تماماً
+<script type="module">
+    // 1. تعريف المصفوفات الأساسية أولاً
     window.imgs = {}; 
+    const imgCache = {}; // تعريف الكاش هنا مهم جداً قبل الدالة
 
-    // 2. ثم تأكد أن تعريفات الصور تستخدم window.imgs
-// التعديل الصحيح داخل سكريبت الـ Module
-window.imgs['s1'] = getImg('s1'); // الشخصية الأولى
-window.imgs['s8'] = getImg('s8'); // خلفية الجبال
+    // 2. تعريف بيانات الصور (SPRITE_DATA)
+    const SPRITE_DATA = {
+        "s1": "data:image/png;base64,...",
+        "g8": "data:image/png;base64,...", // تأكد أن خلفيتك اسمها g8 هنا
+        // بقية البيانات...
+    };
 
-    // 3. أبعاد الخلفية أيضاً
+    // 3. تعريف دالة جلب الصور (getImg)
+    function getImg(key) {
+        if (imgCache[key]) return imgCache[key];
+        const img = new Image();
+        img.src = SPRITE_DATA[key];
+        imgCache[key] = img;
+        return img;
+    }
+
+    // 4. الآن قم بعمل التحميل المسبق (Preload) بعد تعريف الدالة والكاش
+    Object.keys(SPRITE_DATA).forEach(k => getImg(k));
+
+    // 5. الآن اربط الصور بـ window.imgs لتراها دالة الرسم
+    // (تذكر: g للخلفيات و s للشخصيات)
+    window.imgs['g8'] = getImg('g8'); 
+    window.imgs['s1'] = getImg('s1');
+
+    // 6. أبعاد الخلفية
     window.bgWidth = 1920;
     window.bgHeight = 560;
   const SPRITE_DATA = {
