@@ -414,7 +414,7 @@ function drawBg(camX, color1, color2) {
             ctx.drawImage(bg2, startX + _w, 0, _w, _h);
         }
       }
-    } else {
+     else {
         // خلفية احتياطية (تدرج لوني) في حال لم يتم تحميل الصور
         const g = ctx.createLinearGradient(0, 0, 0, CH);
         g.addColorStop(0, color1);
