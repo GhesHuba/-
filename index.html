@@ -407,7 +407,7 @@ function drawBg(camX, color1, color2) {
       for(let wy=10;wy<bh-10;wy+=18)for(let wx=8;wx<bw-8;wx+=16)if((i+wy+wx)%3!==0)ctx.fillRect(px(bx+wx),CH-bh+wy,8,10);
       ctx.fillStyle='rgba(20,15,40,0.8)';
     }
-  }
+  
 
   function drawPlat(x,y,w,h,type){
     const c=PLAT_C[type]||PLAT_C.stone;
