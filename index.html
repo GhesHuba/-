@@ -1,47 +1,44 @@
 <!DOCTYPE html>
-  <html lang="ar" dir="rtl">
-  <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>DarkBlade — Stalin's Journey</title>
-  <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  html,body{width:100%;height:100%;background:#000;overflow:hidden;touch-action:none}
-  #root{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
-  canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;border:2px solid #3A1A5A;max-width:100vw;max-height:62vh}
-  #controls{display:flex;width:100%;max-width:960px;padding:10px 16px;justify-content:space-between;align-items:center;margin-top:6px}
-  .btn{width:68px;height:68px;border:3px solid rgba(255,255,255,0.25);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:bold;user-select:none;-webkit-user-select:none;touch-action:none;cursor:pointer;font-family:monospace;box-shadow:0 4px 0 rgba(0,0,0,0.6);flex-shrink:0}
-  .btn-move{background:rgba(55,25,100,0.95)}
-  .btn-atk{background:rgba(160,40,15,0.95);font-size:14px}
-  .btn-jmp{background:rgba(15,90,170,0.95)}
-  #hint{color:rgba(160,130,200,0.6);font-size:10px;text-align:center;font-family:monospace;line-height:1.5}
-  </style>
-  </head>
-  <body>
-  <div id="root">
-   <canvas id="gc" width="1800" height="560"></canvas>
-    <div id="controls">
-      <div style="display:flex;gap:10px">
-        <div class="btn btn-move" id="btnL">◀</div>
-        <div class="btn btn-move" id="btnR">▶</div>
-      </div>
-      <div id="hint">← → MOVE<br>SPACE JUMP Z ATTACK</div>
-      <div style="display:flex;gap:10px">
-        <div class="btn btn-atk" id="btnA">ATCK</div>
-        <div class="btn btn-jmp" id="btnJ">JUMP</div>
-      </div>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DarkBlade — Stalin's Journey</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;touch-action:none}
+#root{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;border:2px solid #3A1A5A;max-width:100vw;max-height:62vh}
+#controls{display:flex;width:100%;max-width:960px;padding:10px 16px;justify-content:space-between;align-items:center;margin-top:6px}
+.btn{width:68px;height:68px;border:3px solid rgba(255,255,255,0.25);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:bold;user-select:none;-webkit-user-select:none;touch-action:none;cursor:pointer;font-family:monospace;box-shadow:0 4px 0 rgba(0,0,0,0.6);flex-shrink:0}
+.btn-move{background:rgba(55,25,100,0.95)}
+.btn-atk{background:rgba(160,40,15,0.95);font-size:14px}
+.btn-jmp{background:rgba(15,90,170,0.95)}
+#hint{color:rgba(160,130,200,0.6);font-size:10px;text-align:center;font-family:monospace;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="root">
+  <canvas id="gc" width="1800" height="560"></canvas>
+  <div id="controls">
+    <div style="display:flex;gap:10px">
+      <div class="btn btn-move" id="btnL">◀</div>
+      <div class="btn btn-move" id="btnR">▶</div>
+    </div>
+    <div id="hint">← → MOVE<br>SPACE JUMP Z ATTACK</div>
+    <div style="display:flex;gap:10px">
+      <div class="btn btn-atk" id="btnA">ATCK</div>
+      <div class="btn btn-jmp" id="btnJ">JUMP</div>
     </div>
   </div>
+</div>
 <script type="module">
-  // --- 1. تعريف المصفوفات الأساسية أولاً ---
-window.imgs = {};
-const imgCache = {}; 
 
-// --- 2. تعريف بيانات الصور (SPRITE_DATA) ---
-// تأكد من وجود تعريف واحد فقط لهذا المتغير لمنع خطأ "already been declared"
-const SPRITE_DATA = {
-    // الشخصيات لكل مرحلة
-    "s1": "data:image/png;base64,...", 
+  // ─── Sprite System ────────────────────────────────────────────────────────────
+  // ضع هنا بيانات base64 الحقيقية للصور بدلاً من النقاط الثلاث
+  const SPRITE_DATA = {
+    // صور اللاعب لكل مرحلة
+    "s1": "data:image/png;base64,...",
     "s2": "data:image/png;base64,...",
     "s3": "data:image/png;base64,...",
     "s4": "data:image/png;base64,...",
@@ -49,7 +46,7 @@ const SPRITE_DATA = {
     "s6": "data:image/png;base64,...",
     "s7": "data:image/png;base64,...",
     "s8": "data:image/png;base64,...",
-    // الخلفيات لكل مرحلة
+    // صور خلفية كل مرحلة
     "g1": "data:image/png;base64,...",
     "g2": "data:image/png;base64,...",
     "g3": "data:image/png;base64,...",
@@ -58,56 +55,50 @@ const SPRITE_DATA = {
     "g6": "data:image/png;base64,...",
     "g7": "data:image/png;base64,...",
     "g8": "data:image/png;base64,...",
-    // الأعداء
+    // صور الأعداء
     "m12": "data:image/png;base64,...",
-    "m3": "data:image/png;base64,...",
-    // أضف بقية البيانات هنا...
-};
+    "m3":  "data:image/png;base64,...",
+    "m4":  "data:image/png;base64,...",
+    "m67": "data:image/png;base64,...",
+    "m81": "data:image/png;base64,...",
+    "m82": "data:image/png;base64,...",
+  };
 
-// --- 3. تعريف دالة جلب الصور (getImg) ---
-function getImg(key) {
+  // ذاكرة تخزين الصور المُحمَّلة مسبقاً
+  const imgCache = {};
+
+  function getImg(key) {
     if (imgCache[key]) return imgCache[key];
-    const img = new Image();
-    if (SPRITE_DATA[key]) {
-        img.src = SPRITE_DATA[key];
-        imgCache[key] = img;
-        return img;
+    if (!SPRITE_DATA[key]) {
+      console.warn("مفتاح الصورة غير موجود في SPRITE_DATA: " + key);
+      return null;
     }
-    console.warn("الصورة غير موجودة للمفتاح: " + key);
-    return null;
-}
+    const img = new Image();
+    img.src = SPRITE_DATA[key];
+    imgCache[key] = img;
+    return img;
+  }
 
-// --- 4. التحميل المسبق (Preload) ---
-Object.keys(SPRITE_DATA).forEach(k => getImg(k));
+  // تحميل مسبق لجميع الصور عند بدء التشغيل
+  Object.keys(SPRITE_DATA).forEach(k => getImg(k));
 
-// --- 5. دالة تحديث صور المرحلة الحالية ---
-function setupLevelAssets(levelId) {
-    // التأكد من أن المفاتيح g1, g2... موجودة فعلاً في SPRITE_DATA
-    window.imgs['currentBg'] = getImg('g' + levelId);
-    window.imgs['currentPlayer'] = getImg('s' + levelId);
-    
-    console.log(`تم تحديث الصور للمرحلة: ${levelId}`);
-}
+  // ─── Constants ────────────────────────────────────────────────────────────────
+  // CW و CH يجب أن يطابقا أبعاد عنصر الـ canvas في الـ HTML
+  const CW = 1800;
+  const CH = 560;
+  const GRAVITY = 0.55, JUMP_FORCE = -13, MOVE_SPEED = 4.5, FRICTION = 0.82;
 
-// بدلاً من تشغيلها يدوياً للمرحلة 1 فقط، سنربطها بمتغير اللعبة العام
-// نتحقق من وجود G.lv.id (الموجود في كودك الأصلي)
-const currentLevel = (typeof G !== 'undefined' && G.lv && G.lv.id) ? G.lv.id : 1;
-setupLevelAssets(currentLevel);
   const PLAYER_SPRITES = {1:'s1',2:'s3',3:'s4',4:'s5',5:'s6',6:'s6',7:'s7',8:'s8'};
   const ENEMY_SPRITES  = {m12:'m12',m3:'m3',m4:'m4',m67:'m67',m81:'m81',m82:'m82'};
   const LEVEL_NAMES    = {1:'الطفولة',2:'الشباب والثورة',3:'العمل السياسي',4:'صراع السلطة',5:'السيطرة',6:'التصنيع',7:'الحرب',8:'النهاية'};
 
-  // ─── Constants ───────────────────────────────────────────────────────────────
-  const GRAVITY=0.55, JUMP_FORCE=-13, MOVE_SPEED=4.5, FRICTION=0.82;
-  
-
-  // ─── Utility ─────────────────────────────────────────────────────────────────
+  // ─── Utility ──────────────────────────────────────────────────────────────────
   function px(v){return Math.round(v);}
   function overlap(ax,ay,aw,ah,bx,by,bw,bh){
     return ax<bx+bw && ax+aw>bx && ay<by+bh && ay+ah>by;
   }
 
-  // ─── Level Data ──────────────────────────────────────────────────────────────
+  // ─── Level Data ───────────────────────────────────────────────────────────────
   let _eid=0, _cid=0;
   function mkE(sk,type,x,y,pl,pr,hp,isBoss=false){
     const w=isBoss?72:type==='bat'?36:type==='knight'?44:40;
@@ -175,25 +166,12 @@ setupLevelAssets(currentLevel);
      coins:[mkC(220,540),mkC(330,460),mkC(440,380),mkC(550,300),mkC(660,220),mkC(770,300),mkC(900,220),mkC(1040,140),mkC(1180,220),mkC(1340,300),mkC(1500,220),mkC(1660,140),mkC(1820,220),mkC(2000,300),mkC(2180,220),mkC(2380,140),mkC(2580,220),mkC(2780,300),mkC(3000,220),mkC(3220,140),mkC(3460,220),mkC(3700,300),mkC(3940,220),mkC(4200,460)],
      spikes:[mkS(260,644,50),mkS(720,644,50),mkS(1220,644,80),mkS(1720,644,80),mkS(2200,644,100),mkS(2700,644,100),mkS(3100,644,120),mkS(3500,644,120)],exitX:4470,exitY:470},
   ];
-const CW = 1920;  // عرض الخلفية والصورة
-const CH = 560;   // ارتفاع الخلفية والصورة
-const BG_IMG_COUNT = 2;
-const NUM_LEVELS = 8; // حسب عدد المراحل لديك
-const levelBgImgs = {};
-for (let i = 1; i <= NUM_LEVELS; i++) {
-  levelBgImgs[i] = [];
-  for (let j = 0; j < BG_IMG_COUNT; j++) {
-    const name = j === 0 ? `g${i}.png` : `g${i}.1.png`;
-    const img = new Image();
-    img.src = name;
-    levelBgImgs[i].push(img);
-  }
-}
-  // ─── Physics ─────────────────────────────────────────────────────────────────
-  function resolvePlayerPlat(pl,plats){
-    pl.onGround=false;
+
+  // ─── Physics ──────────────────────────────────────────────────────────────────
+  function resolvePlayerPlat(pl, plats){
+    pl.onGround = false;
     for(const p of plats){
-      if(!overlap(pl.x,pl.y,pl.w,pl.h,p.x,p.y,p.width,p.height))continue;
+      if(!overlap(pl.x,pl.y,pl.w,pl.h,p.x,p.y,p.width,p.height)) continue;
       const oL=(pl.x+pl.w)-p.x, oR=(p.x+p.width)-pl.x;
       const oT=(pl.y+pl.h)-p.y, oB=(p.y+p.height)-pl.y;
       const mX=Math.min(oL,oR), mY=Math.min(oT,oB);
@@ -206,13 +184,14 @@ for (let i = 1; i <= NUM_LEVELS; i++) {
       }
     }
   }
-  function resolveEnemyPlat(e,plats){
-    e.onGround=false;
+
+  function resolveEnemyPlat(e, plats){
+    e.onGround = false;
     for(const p of plats){
-      if(!overlap(e.x,e.y,e.width,e.height,p.x,p.y,p.width,p.height))continue;
-      const oT=(e.y+e.height)-p.y,oB=(p.y+p.height)-e.y;
-      const oL=(e.x+e.width)-p.x,oR=(p.x+p.width)-e.x;
-      const mX=Math.min(oL,oR),mY=Math.min(oT,oB);
+      if(!overlap(e.x,e.y,e.width,e.height,p.x,p.y,p.width,p.height)) continue;
+      const oT=(e.y+e.height)-p.y, oB=(p.y+p.height)-e.y;
+      const oL=(e.x+e.width)-p.x, oR=(p.x+p.width)-e.x;
+      const mX=Math.min(oL,oR), mY=Math.min(oT,oB);
       if(mY<mX){
         if(oT<oB){e.y=p.y-e.height;e.vy=0;e.onGround=true;}
         else{e.y=p.y+p.height;if(e.vy<0)e.vy=0;}
@@ -224,444 +203,493 @@ for (let i = 1; i <= NUM_LEVELS; i++) {
   }
 
   // ─── Game State ───────────────────────────────────────────────────────────────
-  let G={state:'menu',pl:null,enemies:[],coins:[],lvIdx:0,lv:null,cam:{x:0,y:0},tick:0,lcTimer:0,score:0};
+  let G = {state:'menu', pl:null, enemies:[], coins:[], lvIdx:0, lv:null, cam:{x:0,y:0}, tick:0, lcTimer:0, score:0};
 
-  function mkPlayer(lives=3,score=0,coins=0){
+  function mkPlayer(lives=3, score=0, coins=0){
     return{x:40,y:500,vx:0,vy:0,w:40,h:52,hp:5,maxHp:5,lives,onGround:false,facingRight:true,atkTimer:0,invTimer:0,isAtk:false,score,coins};
   }
+
   function cloneLv(idx){
-    const src=LEVELS[idx];
+    const src = LEVELS[idx];
     return{
-      lv:src,
-      enemies:src.enemies.map(e=>({...e})),
-      coins:src.coins.map(c=>({...c})),
+      lv: src,
+      enemies: src.enemies.map(e => ({...e})),
+      coins: src.coins.map(c => ({...c})),
     };
   }
+
   function startGame(){
-    const {lv,enemies,coins}=cloneLv(0);
-    G={state:'playing',pl:mkPlayer(),enemies,coins,lvIdx:0,lv,cam:{x:0,y:0},tick:0,lcTimer:0,score:0};
+    const {lv, enemies, coins} = cloneLv(0);
+    G = {state:'playing', pl:mkPlayer(), enemies, coins, lvIdx:0, lv, cam:{x:0,y:0}, tick:0, lcTimer:0, score:0};
   }
+
   function nextLevel(){
-    const ni=G.lvIdx+1;
-    if(ni>=LEVELS.length){G.state='win';return;}
-    const {lv,enemies,coins}=cloneLv(ni);
-    const old=G.pl;
-    G.pl=mkPlayer(old.lives,old.score,old.coins);
-    G.enemies=enemies;G.coins=coins;G.lv=lv;G.lvIdx=ni;
-    G.cam={x:0,y:0};G.state='playing';G.lcTimer=0;
+    const ni = G.lvIdx + 1;
+    if(ni >= LEVELS.length){G.state='win'; return;}
+    const {lv, enemies, coins} = cloneLv(ni);
+    const old = G.pl;
+    G.pl = mkPlayer(old.lives, old.score, old.coins);
+    G.enemies = enemies;
+    G.coins = coins;
+    G.lv = lv;
+    G.lvIdx = ni;
+    G.cam = {x:0, y:0};
+    G.state = 'playing';
+    G.lcTimer = 0;
   }
+
   function respawn(){
-    const pl=G.pl;
-    pl.x=40;pl.y=500;pl.vx=0;pl.vy=0;pl.hp=pl.maxHp;pl.invTimer=90;
+    const pl = G.pl;
+    pl.x=40; pl.y=500; pl.vx=0; pl.vy=0; pl.hp=pl.maxHp; pl.invTimer=90;
   }
+
   function takeDmg(amt){
-    const pl=G.pl;
-    if(pl.invTimer>0)return;
-    pl.hp-=amt;pl.invTimer=80;
-    if(pl.hp<=0){
-      pl.hp=0;pl.lives--;
-      if(pl.lives<=0){G.state='gameOver';}else{respawn();}
+    const pl = G.pl;
+    if(pl.invTimer > 0) return;
+    pl.hp -= amt;
+    pl.invTimer = 80;
+    if(pl.hp <= 0){
+      pl.hp = 0;
+      pl.lives--;
+      if(pl.lives <= 0){G.state='gameOver';}
+      else{respawn();}
     }
   }
 
   // ─── Input ────────────────────────────────────────────────────────────────────
-  const INP={left:false,right:false,jump:false,attack:false,jumpP:false,atkP:false};
-  function handleAction(a,down){
+  const INP = {left:false, right:false, jump:false, attack:false, jumpP:false, atkP:false};
+
+  function handleAction(a, down){
     if(!down){
-      if(a==='left')INP.left=false;
-      if(a==='right')INP.right=false;
-      if(a==='jump')INP.jump=false;
-      if(a==='attack')INP.attack=false;
+      if(a==='left')   INP.left   = false;
+      if(a==='right')  INP.right  = false;
+      if(a==='jump')   INP.jump   = false;
+      if(a==='attack') INP.attack = false;
       return;
     }
-    if(G.state!=='playing'){
-      if(a==='jump'){
-        if(G.state==='menu')startGame();
-        else if(G.state==='levelComplete')nextLevel();
-        else if(G.state==='gameOver')startGame();
-        else if(G.state==='win')startGame();
+    if(G.state !== 'playing'){
+      if(a === 'jump'){
+        if(G.state==='menu')          startGame();
+        else if(G.state==='levelComplete') nextLevel();
+        else if(G.state==='gameOver') startGame();
+        else if(G.state==='win')      startGame();
       }
       return;
     }
-    if(a==='left')INP.left=true;
-    if(a==='right')INP.right=true;
-    if(a==='jump'){if(!INP.jump)INP.jumpP=true;INP.jump=true;}
-    if(a==='attack'){if(!INP.attack)INP.atkP=true;INP.attack=true;}
+    if(a==='left')   INP.left  = true;
+    if(a==='right')  INP.right = true;
+    if(a==='jump')   {if(!INP.jump)  INP.jumpP = true; INP.jump   = true;}
+    if(a==='attack') {if(!INP.attack)INP.atkP  = true; INP.attack = true;}
   }
-  document.addEventListener('keydown',e=>{
-    if(e.code==='ArrowLeft'||e.code==='KeyA'){handleAction('left',true);e.preventDefault();}
-    if(e.code==='ArrowRight'||e.code==='KeyD'){handleAction('right',true);e.preventDefault();}
-    if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW'){handleAction('jump',true);e.preventDefault();}
-    if(e.code==='KeyZ'||e.code==='KeyX'||e.code==='KeyJ')handleAction('attack',true);
+
+  document.addEventListener('keydown', e => {
+    if(e.code==='ArrowLeft' ||e.code==='KeyA') {handleAction('left',  true); e.preventDefault();}
+    if(e.code==='ArrowRight'||e.code==='KeyD') {handleAction('right', true); e.preventDefault();}
+    if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW') {handleAction('jump', true); e.preventDefault();}
+    if(e.code==='KeyZ'||e.code==='KeyX'||e.code==='KeyJ') handleAction('attack', true);
   });
-  document.addEventListener('keyup',e=>{
-    if(e.code==='ArrowLeft'||e.code==='KeyA')handleAction('left',false);
-    if(e.code==='ArrowRight'||e.code==='KeyD')handleAction('right',false);
-    if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW')handleAction('jump',false);
-    if(e.code==='KeyZ'||e.code==='KeyX'||e.code==='KeyJ')handleAction('attack',false);
-  });
-  ['btnL','btnR','btnA','btnJ'].forEach(id=>{
-    const el=document.getElementById(id);
-    const act=id==='btnL'?'left':id==='btnR'?'right':id==='btnA'?'attack':'jump';
-    el.addEventListener('touchstart',e=>{e.preventDefault();handleAction(act,true)},{passive:false});
-    el.addEventListener('touchend',e=>{e.preventDefault();handleAction(act,false)},{passive:false});
-    el.addEventListener('mousedown',()=>handleAction(act,true));
-    el.addEventListener('mouseup',()=>handleAction(act,false));
-    el.addEventListener('mouseleave',()=>handleAction(act,false));
+  document.addEventListener('keyup', e => {
+    if(e.code==='ArrowLeft' ||e.code==='KeyA') handleAction('left',   false);
+    if(e.code==='ArrowRight'||e.code==='KeyD') handleAction('right',  false);
+    if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW') handleAction('jump', false);
+    if(e.code==='KeyZ'||e.code==='KeyX'||e.code==='KeyJ')     handleAction('attack', false);
   });
 
-  // ─── Update ──────────────────────────────────────────────────────────────────
+  ['btnL','btnR','btnA','btnJ'].forEach(id => {
+    const el  = document.getElementById(id);
+    const act = id==='btnL'?'left': id==='btnR'?'right': id==='btnA'?'attack':'jump';
+    el.addEventListener('touchstart', e => {e.preventDefault(); handleAction(act, true);},  {passive:false});
+    el.addEventListener('touchend',   e => {e.preventDefault(); handleAction(act, false);}, {passive:false});
+    el.addEventListener('mousedown',  () => handleAction(act, true));
+    el.addEventListener('mouseup',    () => handleAction(act, false));
+    el.addEventListener('mouseleave', () => handleAction(act, false));
+  });
+
+  // ─── Update ───────────────────────────────────────────────────────────────────
   function update(){
     G.tick++;
-    if(G.state!=='playing')return;
-    const pl=G.pl,lv=G.lv;
+    if(G.state !== 'playing') return;
+    const pl = G.pl, lv = G.lv;
 
-    // Move
-    if(INP.left){pl.vx=-MOVE_SPEED;pl.facingRight=false;}
-    else if(INP.right){pl.vx=MOVE_SPEED;pl.facingRight=true;}
-    else{pl.vx*=FRICTION;if(Math.abs(pl.vx)<0.1)pl.vx=0;}
+    // حركة اللاعب
+    if(INP.left)       {pl.vx = -MOVE_SPEED; pl.facingRight = false;}
+    else if(INP.right) {pl.vx =  MOVE_SPEED; pl.facingRight = true;}
+    else               {pl.vx *= FRICTION; if(Math.abs(pl.vx) < 0.1) pl.vx = 0;}
 
-    // Jump
-    if((INP.jump||INP.jumpP)&&pl.onGround){pl.vy=JUMP_FORCE;pl.onGround=false;}
-    INP.jumpP=false;
+    // القفز
+    if((INP.jump || INP.jumpP) && pl.onGround){pl.vy = JUMP_FORCE; pl.onGround = false;}
+    INP.jumpP = false;
 
-    // Attack
-    if(INP.atkP&&pl.atkTimer<=0){pl.isAtk=true;pl.atkTimer=22;INP.atkP=false;}
-    if(pl.atkTimer>0){pl.atkTimer--;pl.isAtk=pl.atkTimer>6;}else pl.isAtk=false;
+    // الهجوم
+    if(INP.atkP && pl.atkTimer <= 0){pl.isAtk = true; pl.atkTimer = 22; INP.atkP = false;}
+    if(pl.atkTimer > 0){pl.atkTimer--; pl.isAtk = pl.atkTimer > 6;} else pl.isAtk = false;
 
-    pl.vy+=GRAVITY;if(pl.vy>18)pl.vy=18;
-    pl.x+=pl.vx;pl.y+=pl.vy;
+    pl.vy += GRAVITY;
+    if(pl.vy > 18) pl.vy = 18;
+    pl.x += pl.vx;
+    pl.y += pl.vy;
 
-    resolvePlayerPlat(pl,lv.plats);
-    if(pl.x<0){pl.x=0;pl.vx=0;}
-    if(pl.x+pl.w>lv.w){pl.x=lv.w-pl.w;pl.vx=0;}
-    if(pl.invTimer>0)pl.invTimer--;
+    resolvePlayerPlat(pl, lv.plats);
+    if(pl.x < 0){pl.x = 0; pl.vx = 0;}
+    if(pl.x + pl.w > lv.w){pl.x = lv.w - pl.w; pl.vx = 0;}
+    if(pl.invTimer > 0) pl.invTimer--;
 
-    // Spikes
+    // الأشواك
     for(const s of lv.spikes){
-      if(overlap(pl.x+4,pl.y+4,pl.w-8,pl.h-8,s.x,s.y,s.width,s.height))takeDmg(10);
+      if(overlap(pl.x+4, pl.y+4, pl.w-8, pl.h-8, s.x, s.y, s.width, s.height)) takeDmg(10);
     }
-    // Fall
-    if(pl.y>lv.h+50)takeDmg(10);
 
-    // Enemies
+    // السقوط خارج الخريطة
+    if(pl.y > lv.h + 50) takeDmg(10);
+
+    // الأعداء
     for(const e of G.enemies){
-      if(e.dead)continue;
-      updateEnemy(e,lv);
-      const dmg=e.isBoss?2:1;
-      if(pl.invTimer<=0&&overlap(pl.x+4,pl.y+4,pl.w-8,pl.h-8,e.x,e.y,e.width,e.height))takeDmg(dmg);
+      if(e.dead) continue;
+      updateEnemy(e, lv);
+      const dmg = e.isBoss ? 2 : 1;
+      if(pl.invTimer <= 0 && overlap(pl.x+4, pl.y+4, pl.w-8, pl.h-8, e.x, e.y, e.width, e.height)) takeDmg(dmg);
       if(pl.isAtk){
-        const ar=e.isBoss?60:48;
-        const ax=pl.facingRight?pl.x+pl.w:pl.x-ar;
-        if(overlap(ax,pl.y+4,ar,pl.h-8,e.x,e.y,e.width,e.height)&&e.stunTimer<=15){
-          e.hp--;e.stunTimer=20;e.vx=pl.facingRight?2:-2;pl.score+=10;
-          if(e.hp<=0){e.dead=true;pl.score+=e.isBoss?500:50;}
+        const ar = e.isBoss ? 60 : 48;
+        const ax = pl.facingRight ? pl.x + pl.w : pl.x - ar;
+        if(overlap(ax, pl.y+4, ar, pl.h-8, e.x, e.y, e.width, e.height) && e.stunTimer <= 15){
+          e.hp--; e.stunTimer = 20; e.vx = pl.facingRight ? 2 : -2; pl.score += 10;
+          if(e.hp <= 0){e.dead = true; pl.score += e.isBoss ? 500 : 50;}
         }
       }
     }
 
-    // Coins
+    // العملات
     for(const c of G.coins){
-      if(!c.collected&&overlap(pl.x+4,pl.y+4,pl.w-8,pl.h-8,c.x,c.y,16,16)){
-        c.collected=true;pl.coins++;pl.score+=20;
+      if(!c.collected && overlap(pl.x+4, pl.y+4, pl.w-8, pl.h-8, c.x, c.y, 16, 16)){
+        c.collected = true; pl.coins++; pl.score += 20;
       }
     }
 
-    // Exit
-    const boss=G.enemies.find(e=>e.isBoss&&!e.dead);
-    const blocked=lv.reqBoss&&boss;
-    if(!blocked&&overlap(pl.x,pl.y,pl.w,pl.h,lv.exitX-22,lv.exitY-65,44,75)){
-      G.lcTimer++;if(G.lcTimer>30){G.state='levelComplete';G.lcTimer=0;}
-    }else if(G.lcTimer>0)G.lcTimer--;
+    // المخرج
+    const boss    = G.enemies.find(e => e.isBoss && !e.dead);
+    const blocked = lv.reqBoss && boss;
+    if(!blocked && overlap(pl.x, pl.y, pl.w, pl.h, lv.exitX-22, lv.exitY-65, 44, 75)){
+      G.lcTimer++;
+      if(G.lcTimer > 30){G.state = 'levelComplete'; G.lcTimer = 0;}
+    } else if(G.lcTimer > 0) G.lcTimer--;
 
-    // Camera
-    const tx=pl.x+pl.w/2-CW/2,ty=pl.y+pl.h/2-CH/2;
-    G.cam.x+=(tx-G.cam.x)*0.12;G.cam.y+=(ty-G.cam.y)*0.12;
-    G.cam.x=Math.max(0,Math.min(lv.w-CW,G.cam.x));
-    G.cam.y=Math.max(0,Math.min(lv.h-CH,G.cam.y));
+    // الكاميرا
+    const tx = pl.x + pl.w/2 - CW/2;
+    const ty = pl.y + pl.h/2 - CH/2;
+    G.cam.x += (tx - G.cam.x) * 0.12;
+    G.cam.y += (ty - G.cam.y) * 0.12;
+    G.cam.x = Math.max(0, Math.min(lv.w - CW, G.cam.x));
+    G.cam.y = Math.max(0, Math.min(lv.h - CH, G.cam.y));
   }
 
-  function updateEnemy(e,lv){
-    if(e.stunTimer>0){
-      e.stunTimer--;e.vx*=0.7;
-      if(e.type!=='bat'&&e.type!=='ghost'){e.vy+=GRAVITY;e.y+=e.vy;resolveEnemyPlat(e,lv.plats);}
+  function updateEnemy(e, lv){
+    if(e.stunTimer > 0){
+      e.stunTimer--;
+      e.vx *= 0.7;
+      if(e.type !== 'bat' && e.type !== 'ghost'){e.vy += GRAVITY; e.y += e.vy; resolveEnemyPlat(e, lv.plats);}
       return;
     }
-    const spd=e.isBoss?2.0:e.type==='knight'?1.2:e.type==='bat'?1.8:e.type==='ghost'?1.3:1.4;
-    if(e.type==='bat'||e.type==='ghost'){
-      e.vx=e.facingRight?spd:-spd;
-      if(e.x+e.width>=e.pr)e.facingRight=false;
-      else if(e.x<=e.pl)e.facingRight=true;
-      e.vy=Math.sin(G.tick/20)*1.8;
-    }else{
-      if(e.x+e.width>=e.pr){e.facingRight=false;e.vx=-spd;}
-      else if(e.x<=e.pl){e.facingRight=true;e.vx=spd;}
-      if(e.isBoss&&G.tick%200<30)e.vx*=2.5;
-      e.vy+=GRAVITY;e.y+=e.vy;resolveEnemyPlat(e,lv.plats);
+    const spd = e.isBoss ? 2.0 : e.type==='knight' ? 1.2 : e.type==='bat' ? 1.8 : e.type==='ghost' ? 1.3 : 1.4;
+    if(e.type === 'bat' || e.type === 'ghost'){
+      e.vx = e.facingRight ? spd : -spd;
+      if(e.x + e.width >= e.pr) e.facingRight = false;
+      else if(e.x <= e.pl)      e.facingRight = true;
+      e.vy = Math.sin(G.tick / 20) * 1.8;
+    } else {
+      if(e.x + e.width >= e.pr){e.facingRight = false; e.vx = -spd;}
+      else if(e.x <= e.pl)      {e.facingRight = true;  e.vx =  spd;}
+      if(e.isBoss && G.tick % 200 < 30) e.vx *= 2.5;
+      e.vy += GRAVITY; e.y += e.vy; resolveEnemyPlat(e, lv.plats);
     }
-    e.x+=e.vx;
-    if(e.x<0){e.x=0;e.vx=Math.abs(e.vx);}
-    if(e.x+e.width>lv.w){e.x=lv.w-e.width;e.vx=-Math.abs(e.vx);}
+    e.x += e.vx;
+    if(e.x < 0){e.x = 0; e.vx = Math.abs(e.vx);}
+    if(e.x + e.width > lv.w){e.x = lv.w - e.width; e.vx = -Math.abs(e.vx);}
   }
 
   // ─── Rendering ────────────────────────────────────────────────────────────────
-  const canvas=document.getElementById('gc');
-  const ctx=canvas.getContext('2d');
-  ctx.imageSmoothingEnabled=false;
+  const canvas = document.getElementById('gc');
+  const ctx    = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
 
-  const PLAT_C={
-    stone:{top:'#8B7355',wall:'#6B5335',line:'#4B3315'},
-    wood:{top:'#C8A06A',wall:'#A0784A',line:'#80582A'},
-    dark:{top:'#5A4A6A',wall:'#3A2A4A',line:'#1A0A2A'},
-    }
-function drawBg(camX, color1, color2) {
-    // استخدام الأبعاد التي حددتها
-    const _w = window.bgWidth || 1920;
-    const _h = window.bgHeight || 560;
+  const PLAT_C = {
+    stone: {top:'#8B7355', wall:'#6B5335', line:'#4B3315'},
+    wood:  {top:'#C8A06A', wall:'#A0784A', line:'#80582A'},
+    dark:  {top:'#5A4A6A', wall:'#3A2A4A', line:'#1A0A2A'},
+  };
 
-    // 1. تحديد اسم الصورة (بناءً على صورتك، الاسم هو 's8' للجبال)
-    const lvId = (G.lv && G.lv.id) ? G.lv.id : 1;
-    let imgKey = 's' + lvId; 
-    
-    // للتجربة: سنجعلها 's8' دائماً لنتأكد من ظهور الجبال
-    imgKey = 's8'; 
+  // رسم الخلفية: يستخدم صورة المرحلة الحالية مع تمرير بالإزاحة، أو لون احتياطي
+  function drawBg(camX, color1, color2){
+    const lvId  = (G.lv && G.lv.id) ? G.lv.id : 1;
+    const bgImg = getImg('g' + lvId);
 
-    // 2. جلب الصورة من مصفوفة imgs (الموجودة في صورتك)
-    const bgImg = (typeof imgs !== 'undefined') ? imgs[imgKey] : null;
-
-    // 3. فحص الأمان والرسم
-    if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
-        const scrollSpeed = 0.5; // سرعة الحركة
-        const totalWidth = _w;
-        let xOffset = -(camX * scrollSpeed) % totalWidth;
-
-        // رسم الصورة مرتين بجانب بعضهما لضمان التكرار
-        ctx.drawImage(bgImg, xOffset, 0, _w, _h);
-        ctx.drawImage(bgImg, xOffset + _w, 0, _w, _h);
-        
-        // سد الفراغات
-        if (xOffset + _w < (window.CW || 1800)) {
-            ctx.drawImage(bgImg, xOffset + (_w * 2), 0, _w, _h);
-        }
+    if(bgImg && bgImg.complete && bgImg.naturalWidth > 0){
+      const imgW       = bgImg.naturalWidth  || CW;
+      const imgH       = bgImg.naturalHeight || CH;
+      const scrollSpeed = 0.4;
+      let xOffset = -(camX * scrollSpeed) % imgW;
+      if(xOffset > 0) xOffset -= imgW;
+      // رسم الصورة مرتين ضماناً للتكرار الأفقي الكامل
+      ctx.drawImage(bgImg, xOffset,        0, imgW, CH);
+      ctx.drawImage(bgImg, xOffset + imgW, 0, imgW, CH);
+      if(xOffset + imgW * 2 < CW){
+        ctx.drawImage(bgImg, xOffset + imgW * 2, 0, imgW, CH);
+      }
     } else {
-        // إذا لم تظهر الصورة، ارسم لوناً احتياطياً
-        const g = ctx.createLinearGradient(0, 0, 0, _h);
-        g.addColorStop(0, color1 || '#1a1a4d'); 
-        g.addColorStop(1, color2 || '#000000');
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, (window.CW || 1920), _h);
-        
-        // تنبيه في حال كانت الصورة غير موجودة في المصفوفة
-        if (!bgImg) console.warn("لم أجد الصورة " + imgKey + " في مصفوفة imgs!");
-    }
-}
-
-// دالة الرسم الاحتياطي لمنع الشاشة السوداء
-function drawFallback(c1, c2, w, h) {
-    const gradient = ctx.createLinearGradient(0, 0, 0, h);
-    gradient.addColorStop(0, c1 || '#0a0020'); // لون السماء العلوي
-    gradient.addColorStop(1, c2 || '#1a0530'); // لون السماء السفلي
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, w, h);
-}
-
-  function drawPlat(x,y,w,h,type){
-    const c=PLAT_C[type]||PLAT_C.stone;
-    ctx.fillStyle=c.wall;ctx.fillRect(px(x),px(y),px(w),px(h));
-    ctx.fillStyle=c.top;ctx.fillRect(px(x),px(y),px(w),6);
-    ctx.fillStyle=c.line;
-    for(let tx=0;tx<w;tx+=20)ctx.fillRect(px(x+tx),px(y+6),2,h-6);
-    for(let ty=8;ty<h;ty+=12)ctx.fillRect(px(x),px(y+ty),w,1);
-    ctx.fillStyle='rgba(255,255,255,0.1)';ctx.fillRect(px(x),px(y),2,h);
-  }
-
-  function drawSpike(x,y,w){
-    const sw=16;
-    for(let sx=0;sx<w;sx+=sw){
-      ctx.fillStyle='#888';
-      ctx.beginPath();ctx.moveTo(px(x+sx),px(y+16));ctx.lineTo(px(x+sx+sw/2),px(y));ctx.lineTo(px(x+sx+sw),px(y+16));ctx.closePath();ctx.fill();
-      ctx.fillStyle='#bbb';ctx.fillRect(px(x+sx+sw/2-1),px(y),2,3);
+      // تدرج احتياطي إذا لم تُحمَّل الصورة بعد
+      const g = ctx.createLinearGradient(0, 0, 0, CH);
+      g.addColorStop(0, color1 || '#1a1a4d');
+      g.addColorStop(1, color2 || '#000000');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, CW, CH);
     }
   }
 
-  function drawExit(x,y,locked){
-    const t=G.tick,gl=Math.sin(t*0.05)*0.3+0.7;
-    const clr=locked?'#AA2200':'#3A1A5A',inner=locked?'#CC3300':'#6A3A9A';
-    ctx.fillStyle=clr;ctx.fillRect(px(x-22),px(y-65),44,75);
-    ctx.fillStyle=inner;ctx.fillRect(px(x-18),px(y-61),36,67);
-    ctx.fillStyle=locked?`rgba(220,80,20,${gl*0.5})`:`rgba(160,80,255,${gl*0.4})`;
-    ctx.fillRect(px(x-14),px(y-58),28,60);
-    if(!locked){ctx.fillStyle=`rgba(200,150,255,${gl*0.7})`;ctx.fillRect(px(x-8),px(y-44),16,32);}
-    ctx.fillStyle=locked?'#FF4400':'#FFCC44';ctx.fillRect(px(x-6),px(y-72),12,9);
-    if(locked){ctx.fillStyle='#FF6622';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.fillText('BOSS!',x,y-80);ctx.textAlign='left';}
+  function drawPlat(x, y, w, h, type){
+    const c = PLAT_C[type] || PLAT_C.stone;
+    ctx.fillStyle = c.wall; ctx.fillRect(px(x), px(y), px(w), px(h));
+    ctx.fillStyle = c.top;  ctx.fillRect(px(x), px(y), px(w), 6);
+    ctx.fillStyle = c.line;
+    for(let tx=0; tx<w; tx+=20) ctx.fillRect(px(x+tx), px(y+6), 2, h-6);
+    for(let ty=8; ty<h; ty+=12) ctx.fillRect(px(x), px(y+ty), w, 1);
+    ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fillRect(px(x), px(y), 2, h);
   }
 
-  function drawCoin(cx,cy){
-    const bob=Math.sin(G.tick*0.1+cx*0.01)*3;
-    const gl=Math.sin(G.tick*0.08)*0.2+0.8;
-    ctx.fillStyle=`rgba(255,220,0,${gl*0.3})`;ctx.fillRect(px(cx-10),px(cy-10+bob),20,20);
-    ctx.fillStyle='#FFCC00';ctx.fillRect(px(cx-6),px(cy-8+bob),12,16);ctx.fillRect(px(cx-8),px(cy-4+bob),16,8);
-    ctx.fillStyle='#FFE866';ctx.fillRect(px(cx-4),px(cy-6+bob),4,8);
+  function drawSpike(x, y, w){
+    const sw = 16;
+    for(let sx=0; sx<w; sx+=sw){
+      ctx.fillStyle = '#888';
+      ctx.beginPath();
+      ctx.moveTo(px(x+sx), px(y+16));
+      ctx.lineTo(px(x+sx+sw/2), px(y));
+      ctx.lineTo(px(x+sx+sw), px(y+16));
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#bbb'; ctx.fillRect(px(x+sx+sw/2-1), px(y), 2, 3);
+    }
   }
 
-  function drawSprite(key,x,y,w,h,flipX){
-    const img=getImg(key);
-    if(!img.complete||img.naturalWidth===0)return;
+  function drawExit(x, y, locked){
+    const t  = G.tick;
+    const gl = Math.sin(t * 0.05) * 0.3 + 0.7;
+    const clr   = locked ? '#AA2200' : '#3A1A5A';
+    const inner = locked ? '#CC3300' : '#6A3A9A';
+    ctx.fillStyle = clr;   ctx.fillRect(px(x-22), px(y-65), 44, 75);
+    ctx.fillStyle = inner; ctx.fillRect(px(x-18), px(y-61), 36, 67);
+    ctx.fillStyle = locked ? `rgba(220,80,20,${gl*0.5})` : `rgba(160,80,255,${gl*0.4})`;
+    ctx.fillRect(px(x-14), px(y-58), 28, 60);
+    if(!locked){ctx.fillStyle = `rgba(200,150,255,${gl*0.7})`; ctx.fillRect(px(x-8), px(y-44), 16, 32);}
+    ctx.fillStyle = locked ? '#FF4400' : '#FFCC44'; ctx.fillRect(px(x-6), px(y-72), 12, 9);
+    if(locked){
+      ctx.fillStyle = '#FF6622';
+      ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
+      ctx.fillText('BOSS!', x, y-80); ctx.textAlign = 'left';
+    }
+  }
+
+  function drawCoin(cx, cy){
+    const bob = Math.sin(G.tick * 0.1 + cx * 0.01) * 3;
+    const gl  = Math.sin(G.tick * 0.08) * 0.2 + 0.8;
+    ctx.fillStyle = `rgba(255,220,0,${gl*0.3})`; ctx.fillRect(px(cx-10), px(cy-10+bob), 20, 20);
+    ctx.fillStyle = '#FFCC00';
+    ctx.fillRect(px(cx-6), px(cy-8+bob),  12, 16);
+    ctx.fillRect(px(cx-8), px(cy-4+bob),  16,  8);
+    ctx.fillStyle = '#FFE866'; ctx.fillRect(px(cx-4), px(cy-6+bob), 4, 8);
+  }
+
+  // رسم sprite مع حماية من null وصور غير محملة
+  function drawSprite(key, x, y, w, h, flipX){
+    const img = getImg(key);
+    if(!img || !img.complete || img.naturalWidth === 0) return;
     ctx.save();
-    if(flipX){ctx.translate(px(x+w),px(y));ctx.scale(-1,1);ctx.drawImage(img,0,0,px(w),px(h));}
-    else ctx.drawImage(img,px(x),px(y),px(w),px(h));
+    if(flipX){
+      ctx.translate(px(x + w), px(y));
+      ctx.scale(-1, 1);
+      ctx.drawImage(img, 0, 0, px(w), px(h));
+    } else {
+      ctx.drawImage(img, px(x), px(y), px(w), px(h));
+    }
     ctx.restore();
   }
 
   function drawPlayer(){
-    const pl=G.pl,lv=G.lv;
-    if(pl.invTimer>0&&Math.floor(pl.invTimer/4)%2===0)return;
-    const sk=PLAYER_SPRITES[lv.id]||'s1';
-    const bob=Math.sin(G.tick*0.12)*1.5;
+    const pl = G.pl, lv = G.lv;
+    if(pl.invTimer > 0 && Math.floor(pl.invTimer / 4) % 2 === 0) return;
+    const sk  = PLAYER_SPRITES[lv.id] || 's1';
+    const bob = Math.sin(G.tick * 0.12) * 1.5;
     if(pl.isAtk){
-      ctx.save();ctx.globalAlpha=0.3;ctx.fillStyle='#CCDDFF';
-      const ax=pl.facingRight?pl.x+pl.w:pl.x-50;ctx.fillRect(px(ax),px(pl.y),50,pl.h);ctx.restore();
+      ctx.save(); ctx.globalAlpha = 0.3; ctx.fillStyle = '#CCDDFF';
+      const ax = pl.facingRight ? pl.x + pl.w : pl.x - 50;
+      ctx.fillRect(px(ax), px(pl.y), 50, pl.h); ctx.restore();
     }
-    const sh=pl.h+10,sw=(sh/1.6)|0,ox=(pl.w-sw)/2;
-    drawSprite(sk,pl.x+ox,pl.y-4+bob,sw,sh,!pl.facingRight);
+    const sh = pl.h + 10, sw = (sh / 1.6) | 0, ox = (pl.w - sw) / 2;
+    drawSprite(sk, pl.x + ox, pl.y - 4 + bob, sw, sh, !pl.facingRight);
   }
 
   function drawEnemy(e){
-    if(e.dead)return;
-    const bob=Math.sin(G.tick*0.08+e.x*0.01)*2;
+    if(e.dead) return;
+    const bob = Math.sin(G.tick * 0.08 + e.x * 0.01) * 2;
     ctx.save();
-    if(e.stunTimer>0)ctx.globalAlpha=0.5+Math.sin(G.tick*0.6)*0.5;
-    const sk=ENEMY_SPRITES[e.sk]||e.sk;
-    const sw=e.width+(e.isBoss?20:8),sh=e.height+(e.isBoss?24:10),ox=(sw-e.width)/2;
-    drawSprite(sk,e.x-ox,e.y-10+bob,sw,sh,!e.facingRight);
+    if(e.stunTimer > 0) ctx.globalAlpha = 0.5 + Math.sin(G.tick * 0.6) * 0.5;
+    const sk = ENEMY_SPRITES[e.sk] || e.sk;
+    const sw = e.width  + (e.isBoss ? 20 : 8);
+    const sh = e.height + (e.isBoss ? 24 : 10);
+    const ox = (sw - e.width) / 2;
+    drawSprite(sk, e.x - ox, e.y - 10 + bob, sw, sh, !e.facingRight);
     if(e.isBoss){
-      ctx.globalAlpha=(ctx.globalAlpha)*(Math.sin(G.tick*0.05)*0.2+0.3);
-      ctx.strokeStyle='#FF3300';ctx.lineWidth=3;
-      ctx.strokeRect(px(e.x-4),px(e.y-4+bob),e.width+8,e.height+8);
+      // إصلاح: تعيين globalAlpha بشكل مباشر بدلاً من ضربه بقيمته الحالية
+      ctx.globalAlpha = Math.sin(G.tick * 0.05) * 0.2 + 0.3;
+      ctx.strokeStyle = '#FF3300'; ctx.lineWidth = 3;
+      ctx.strokeRect(px(e.x-4), px(e.y-4+bob), e.width+8, e.height+8);
     }
     ctx.restore();
-    if(e.hp<e.maxHp){
-      const bw=e.isBoss?e.width+20:e.width,bx=e.isBoss?e.x-10:e.x;
-      const bf=(e.hp/e.maxHp)*bw;
-      ctx.fillStyle='#1A0000';ctx.fillRect(px(bx),px(e.y-10),px(bw),6);
-      ctx.fillStyle=e.isBoss?'#FF2200':'#CC2222';ctx.fillRect(px(bx),px(e.y-10),px(bf),6);
-      ctx.fillStyle=e.isBoss?'#FF6644':'#FF4444';ctx.fillRect(px(bx),px(e.y-10),px(bf),2);
+    if(e.hp < e.maxHp){
+      const bw = e.isBoss ? e.width + 20 : e.width;
+      const bx = e.isBoss ? e.x - 10 : e.x;
+      const bf = (e.hp / e.maxHp) * bw;
+      ctx.fillStyle = '#1A0000'; ctx.fillRect(px(bx), px(e.y-10), px(bw), 6);
+      ctx.fillStyle = e.isBoss ? '#FF2200' : '#CC2222'; ctx.fillRect(px(bx), px(e.y-10), px(bf), 6);
+      ctx.fillStyle = e.isBoss ? '#FF6644' : '#FF4444'; ctx.fillRect(px(bx), px(e.y-10), px(bf), 2);
     }
   }
 
   function drawHUD(){
-    const pl=G.pl,lv=G.lv;
-    ctx.fillStyle='rgba(0,0,0,0.65)';ctx.fillRect(8,8,170,30);
-    ctx.fillStyle='#1A0000';ctx.fillRect(10,16,164,14);
-    const hf=(pl.hp/pl.maxHp)*164;
-    ctx.fillStyle=pl.hp>pl.maxHp*0.5?'#CC2222':pl.hp>pl.maxHp*0.25?'#FF8800':'#FF2200';
-    ctx.fillRect(10,16,hf,14);ctx.fillStyle='#FF6666';ctx.fillRect(10,16,hf,5);
-    ctx.fillStyle='#FFF';ctx.font='bold 11px monospace';ctx.fillText(`HP ${pl.hp}/${pl.maxHp}`,186,26);
-    ctx.fillStyle='#FFF';ctx.font='bold 12px monospace';ctx.fillText(`❤ ${pl.lives}`,10,52);
-    ctx.fillStyle='#FFD700';ctx.fillText(`⭐ ${pl.score}`,80,52);
-    ctx.fillStyle='#FFCC00';ctx.fillText(`◈ ${pl.coins}`,200,52);
-    const name=LEVEL_NAMES[lv.id]||`Level ${lv.id}`;
-    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(CW-200,8,192,24);
-    ctx.fillStyle='#AA88FF';ctx.font='bold 12px monospace';ctx.textAlign='right';
-    ctx.fillText(`${lv.id}/8 — ${name}`,CW-10,24);ctx.textAlign='left';
-    // Boss bar
-    const boss=G.enemies.find(e=>e.isBoss);
-    if(boss&&!boss.dead){
-      const bw=320,bx=(CW-bw)/2;
-      ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(bx-4,6,bw+8,28);
-      ctx.fillStyle='#3A0000';ctx.fillRect(bx,12,bw,16);
-      const bf=(boss.hp/boss.maxHp)*bw;
-      ctx.fillStyle='#CC0000';ctx.fillRect(bx,12,bf,16);
-      ctx.fillStyle='#FF4422';ctx.fillRect(bx,12,bf,6);
-      ctx.fillStyle='#FFAA00';ctx.font='bold 11px monospace';ctx.textAlign='center';
-      ctx.fillText(`👑 الزعيم النازي ${boss.hp}/${boss.maxHp}`,CW/2,26);ctx.textAlign='left';
+    const pl = G.pl, lv = G.lv;
+    ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.fillRect(8, 8, 170, 30);
+    ctx.fillStyle = '#1A0000'; ctx.fillRect(10, 16, 164, 14);
+    const hf = (pl.hp / pl.maxHp) * 164;
+    ctx.fillStyle = pl.hp > pl.maxHp*0.5 ? '#CC2222' : pl.hp > pl.maxHp*0.25 ? '#FF8800' : '#FF2200';
+    ctx.fillRect(10, 16, hf, 14);
+    ctx.fillStyle = '#FF6666'; ctx.fillRect(10, 16, hf, 5);
+    ctx.fillStyle = '#FFF'; ctx.font = 'bold 11px monospace';
+    ctx.fillText(`HP ${pl.hp}/${pl.maxHp}`, 186, 26);
+    ctx.fillStyle = '#FFF';    ctx.font = 'bold 12px monospace'; ctx.fillText(`❤ ${pl.lives}`, 10, 52);
+    ctx.fillStyle = '#FFD700'; ctx.fillText(`⭐ ${pl.score}`, 80, 52);
+    ctx.fillStyle = '#FFCC00'; ctx.fillText(`◈ ${pl.coins}`, 200, 52);
+    const name = LEVEL_NAMES[lv.id] || `Level ${lv.id}`;
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';  ctx.fillRect(CW-200, 8, 192, 24);
+    ctx.fillStyle = '#AA88FF'; ctx.font = 'bold 12px monospace'; ctx.textAlign = 'right';
+    ctx.fillText(`${lv.id}/8 — ${name}`, CW-10, 24); ctx.textAlign = 'left';
+    // شريط حياة البوس
+    const boss = G.enemies.find(e => e.isBoss);
+    if(boss && !boss.dead){
+      const bw = 320, bx = (CW - bw) / 2;
+      ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(bx-4, 6, bw+8, 28);
+      ctx.fillStyle = '#3A0000'; ctx.fillRect(bx, 12, bw, 16);
+      const bf = (boss.hp / boss.maxHp) * bw;
+      ctx.fillStyle = '#CC0000'; ctx.fillRect(bx, 12, bf, 16);
+      ctx.fillStyle = '#FF4422'; ctx.fillRect(bx, 12, bf, 6);
+      ctx.fillStyle = '#FFAA00'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
+      ctx.fillText(`👑 الزعيم النازي ${boss.hp}/${boss.maxHp}`, CW/2, 26); ctx.textAlign = 'left';
     }
   }
 
   function drawGame(){
-    const lv=G.lv,pl=G.pl;
-    ctx.clearRect(0,0,CW,CH);
-    drawBg(G.cam.x,lv.bg1,lv.bg2);
-    ctx.save();ctx.translate(-px(G.cam.x),-px(G.cam.y));
-    for(const p of lv.plats)drawPlat(p.x,p.y,p.width,p.height,p.type);
-    for(const s of lv.spikes)drawSpike(s.x,s.y,s.width);
-    const boss=G.enemies.find(e=>e.isBoss&&!e.dead);
-    drawExit(lv.exitX,lv.exitY,!!(lv.reqBoss&&boss));
-    for(const c of G.coins)if(!c.collected)drawCoin(c.x+8,c.y+8);
-    for(const e of G.enemies)if(!e.dead)drawEnemy(e);
+    const lv = G.lv;
+    ctx.clearRect(0, 0, CW, CH);
+    drawBg(G.cam.x, lv.bg1, lv.bg2);
+    ctx.save(); ctx.translate(-px(G.cam.x), -px(G.cam.y));
+    for(const p of lv.plats) drawPlat(p.x, p.y, p.width, p.height, p.type);
+    for(const s of lv.spikes) drawSpike(s.x, s.y, s.width);
+    const boss = G.enemies.find(e => e.isBoss && !e.dead);
+    drawExit(lv.exitX, lv.exitY, !!(lv.reqBoss && boss));
+    for(const c of G.coins) if(!c.collected) drawCoin(c.x+8, c.y+8);
+    for(const e of G.enemies) if(!e.dead) drawEnemy(e);
     drawPlayer();
     ctx.restore();
     drawHUD();
   }
 
   function drawMenu(){
-    const t=G.tick;
-    const g=ctx.createLinearGradient(0,0,0,CH);
-    g.addColorStop(0,'#0a0020');g.addColorStop(1,'#1a0530');
-    ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);
-    ctx.fillStyle='rgba(255,255,255,0.5)';
-    for(let i=0;i<80;i++){ctx.fillRect((i*137)%CW,(i*97)%(CH*0.8),i%7===0?2:1,i%7===0?2:1);}
-    ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(CW/2-230,CH/2-130,460,90);
-    ctx.textAlign='center';
-    ctx.fillStyle='#CC88FF';ctx.font='bold 56px monospace';ctx.fillText('DARK',CW/2-66,CH/2-60);
-    ctx.fillStyle='#FFF';ctx.fillText('BLADE',CW/2+80,CH/2-60);
-    ctx.fillStyle='#AA66DD';ctx.font='13px monospace';ctx.fillText('ستالين — رحلة من الطفولة إلى النصر النهائي',CW/2,CH/2-22);
-    if(Math.sin(t*0.08)>0){ctx.fillStyle='#FFD700';ctx.font='bold 18px monospace';ctx.fillText('PRESS SPACE / TAP TO START',CW/2,CH/2+32);}
-    ctx.fillStyle='rgba(0,0,0,0.45)';ctx.fillRect(CW/2-290,CH/2+50,580,90);
-    ctx.fillStyle='#AA88CC';ctx.font='12px monospace';ctx.fillText('KEYBOARD: ← → MOVE   SPACE/↑ JUMP   Z/X ATTACK',CW/2,CH/2+75);
-    ctx.fillStyle='#FFF';ctx.fillText('MOBILE: ◀ ▶ MOVE   JUMP   ATCK',CW/2,CH/2+100);
-    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(CW/2-290,CH/2+128,580,26);
-    ctx.fillStyle='#FFDD44';ctx.font='10px monospace';
-    ctx.fillText('1.الطفولة ← 2.الثورة ← 3.السياسة ← 4.السلطة ← 5.السيطرة ← 6.التصنيع ← 7.الحرب ← 8.النهاية',CW/2,CH/2+145);
-    ctx.textAlign='left';
+    const t = G.tick;
+    const g = ctx.createLinearGradient(0, 0, 0, CH);
+    g.addColorStop(0, '#0a0020'); g.addColorStop(1, '#1a0530');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, CW, CH);
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    for(let i=0; i<80; i++){ctx.fillRect((i*137)%CW, (i*97)%(CH*0.8), i%7===0?2:1, i%7===0?2:1);}
+    ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(CW/2-230, CH/2-130, 460, 90);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#CC88FF'; ctx.font = 'bold 56px monospace'; ctx.fillText('DARK',  CW/2-66, CH/2-60);
+    ctx.fillStyle = '#FFF';    ctx.fillText('BLADE', CW/2+80, CH/2-60);
+    ctx.fillStyle = '#AA66DD'; ctx.font = '13px monospace';
+    ctx.fillText('ستالين — رحلة من الطفولة إلى النصر النهائي', CW/2, CH/2-22);
+    if(Math.sin(t*0.08) > 0){
+      ctx.fillStyle = '#FFD700'; ctx.font = 'bold 18px monospace';
+      ctx.fillText('PRESS SPACE / TAP TO START', CW/2, CH/2+32);
+    }
+    ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fillRect(CW/2-290, CH/2+50, 580, 90);
+    ctx.fillStyle = '#AA88CC'; ctx.font = '12px monospace';
+    ctx.fillText('KEYBOARD: ← → MOVE   SPACE/↑ JUMP   Z/X ATTACK', CW/2, CH/2+75);
+    ctx.fillStyle = '#FFF';
+    ctx.fillText('MOBILE: ◀ ▶ MOVE   JUMP   ATCK', CW/2, CH/2+100);
+    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(CW/2-290, CH/2+128, 580, 26);
+    ctx.fillStyle = '#FFDD44'; ctx.font = '10px monospace';
+    ctx.fillText('1.الطفولة ← 2.الثورة ← 3.السياسة ← 4.السلطة ← 5.السيطرة ← 6.التصنيع ← 7.الحرب ← 8.النهاية', CW/2, CH/2+145);
+    ctx.textAlign = 'left';
   }
 
   function drawLvComplete(){
-    ctx.fillStyle='rgba(0,0,0,0.72)';ctx.fillRect(0,0,CW,CH);
-    ctx.textAlign='center';
-    ctx.fillStyle='#FFD700';ctx.font='bold 42px monospace';ctx.fillText('مرحلة مكتملة!',CW/2,CH/2-40);
-    ctx.fillStyle='#FFF';ctx.font='20px monospace';
-    const n=LEVEL_NAMES[G.lv.id]||G.lv.id;
-    ctx.fillText(`${G.lv.id} — ${n}`,CW/2,CH/2);
-    if(G.lv.id<8){ctx.fillStyle='#AA88FF';ctx.font='14px monospace';ctx.fillText(`التالية: ${LEVEL_NAMES[G.lv.id+1]||''}`,CW/2,CH/2+30);}
-    if(Math.sin(G.tick*0.1)>0){ctx.fillStyle='#88FFCC';ctx.font='16px monospace';ctx.fillText('SPACE / TAP TO CONTINUE',CW/2,CH/2+62);}
-    ctx.textAlign='left';
+    ctx.fillStyle = 'rgba(0,0,0,0.72)'; ctx.fillRect(0, 0, CW, CH);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FFD700'; ctx.font = 'bold 42px monospace'; ctx.fillText('مرحلة مكتملة!', CW/2, CH/2-40);
+    ctx.fillStyle = '#FFF'; ctx.font = '20px monospace';
+    const n = LEVEL_NAMES[G.lv.id] || G.lv.id;
+    ctx.fillText(`${G.lv.id} — ${n}`, CW/2, CH/2);
+    if(G.lv.id < 8){
+      ctx.fillStyle = '#AA88FF'; ctx.font = '14px monospace';
+      ctx.fillText(`التالية: ${LEVEL_NAMES[G.lv.id+1] || ''}`, CW/2, CH/2+30);
+    }
+    if(Math.sin(G.tick*0.1) > 0){
+      ctx.fillStyle = '#88FFCC'; ctx.font = '16px monospace';
+      ctx.fillText('SPACE / TAP TO CONTINUE', CW/2, CH/2+62);
+    }
+    ctx.textAlign = 'left';
   }
 
   function drawGameOver(){
-    ctx.fillStyle='rgba(0,0,0,0.82)';ctx.fillRect(0,0,CW,CH);
-    ctx.textAlign='center';ctx.fillStyle='#FF3333';ctx.font='bold 52px monospace';ctx.fillText('GAME OVER',CW/2,CH/2-30);
-    if(Math.sin(G.tick*0.1)>0){ctx.fillStyle='#FFF';ctx.font='16px monospace';ctx.fillText('SPACE / TAP TO RETRY',CW/2,CH/2+30);}
-    ctx.textAlign='left';
+    ctx.fillStyle = 'rgba(0,0,0,0.82)'; ctx.fillRect(0, 0, CW, CH);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FF3333'; ctx.font = 'bold 52px monospace'; ctx.fillText('GAME OVER', CW/2, CH/2-30);
+    if(Math.sin(G.tick*0.1) > 0){
+      ctx.fillStyle = '#FFF'; ctx.font = '16px monospace'; ctx.fillText('SPACE / TAP TO RETRY', CW/2, CH/2+30);
+    }
+    ctx.textAlign = 'left';
   }
 
   function drawWin(){
-    const g=ctx.createLinearGradient(0,0,0,CH);
-    g.addColorStop(0,'#1a0040');g.addColorStop(1,'#400020');
-    ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);
-    for(let i=0;i<40;i++){
-      const sx=(i*137+G.tick*2)%CW,sy=(i*97+G.tick)%CH,sz=(Math.sin(i+G.tick*0.05)+1)*3;
-      ctx.fillStyle=i%2===0?'#FFD700':'#FF4444';ctx.fillRect(px(sx),px(sy),px(sz),px(sz));
+    const g = ctx.createLinearGradient(0, 0, 0, CH);
+    g.addColorStop(0, '#1a0040'); g.addColorStop(1, '#400020');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, CW, CH);
+    for(let i=0; i<40; i++){
+      const sx = (i*137 + G.tick*2) % CW;
+      const sy = (i*97  + G.tick)   % CH;
+      const sz = (Math.sin(i + G.tick*0.05) + 1) * 3;
+      ctx.fillStyle = i%2===0 ? '#FFD700' : '#FF4444';
+      ctx.fillRect(px(sx), px(sy), px(sz), px(sz));
     }
-    ctx.textAlign='center';
-    ctx.fillStyle='#FFD700';ctx.font='bold 48px monospace';ctx.fillText('انتصر ستالين!',CW/2,CH/2-70);
-    ctx.fillStyle='#CC88FF';ctx.font='20px monospace';ctx.fillText('تم إسقاط الزعيم النازي!',CW/2,CH/2-20);
-    ctx.fillStyle='#FFCC44';ctx.font='18px monospace';ctx.fillText(`النتيجة النهائية: ${G.pl?G.pl.score:0}`,CW/2,CH/2+20);
-    if(Math.sin(G.tick*0.1)>0){ctx.fillStyle='#88FFCC';ctx.font='15px monospace';ctx.fillText('SPACE / TAP TO PLAY AGAIN',CW/2,CH/2+68);}
-    ctx.textAlign='left';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FFD700'; ctx.font = 'bold 48px monospace'; ctx.fillText('انتصر ستالين!', CW/2, CH/2-70);
+    ctx.fillStyle = '#CC88FF'; ctx.font = '20px monospace'; ctx.fillText('تم إسقاط الزعيم النازي!', CW/2, CH/2-20);
+    ctx.fillStyle = '#FFCC44'; ctx.font = '18px monospace';
+    ctx.fillText(`النتيجة النهائية: ${G.pl ? G.pl.score : 0}`, CW/2, CH/2+20);
+    if(Math.sin(G.tick*0.1) > 0){
+      ctx.fillStyle = '#88FFCC'; ctx.font = '15px monospace';
+      ctx.fillText('SPACE / TAP TO PLAY AGAIN', CW/2, CH/2+68);
+    }
+    ctx.textAlign = 'left';
   }
 
   // ─── Loop ─────────────────────────────────────────────────────────────────────
   function loop(){
     update();
-    if(G.state==='menu')drawMenu();
-    else if(G.state==='playing'){drawGame();}
-    else if(G.state==='levelComplete'){drawGame();drawLvComplete();}
-    else if(G.state==='gameOver')drawGameOver();
-    else if(G.state==='win')drawWin();
+    if     (G.state === 'menu')          drawMenu();
+    else if(G.state === 'playing')       drawGame();
+    else if(G.state === 'levelComplete') {drawGame(); drawLvComplete();}
+    else if(G.state === 'gameOver')      drawGameOver();
+    else if(G.state === 'win')           drawWin();
     requestAnimationFrame(loop);
   }
+
   loop();
-  </script>
-  </body>
-  </html>
+
+</script>
+</body>
+</html>
