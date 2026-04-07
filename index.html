@@ -383,8 +383,7 @@ for (let i = 1; i <= NUM_LEVELS; i++) {
     stone:{top:'#8B7355',wall:'#6B5335',line:'#4B3315'},
     wood:{top:'#C8A06A',wall:'#A0784A',line:'#80582A'},
     dark:{top:'#5A4A6A',wall:'#3A2A4A',line:'#1A0A2A'},
-  };
-function drawBg(camX, color1, color2) {
+  };function drawBg(camX, color1, color2) {
     const lvId = (G.lv && G.lv.id) ? G.lv.id : 1;
     const idx = Math.floor(G.tick / 60) % BG_IMG_COUNT;
     const bgImg = (levelBgImgs[lvId] && levelBgImgs[lvId][idx]) ? levelBgImgs[lvId][idx] : null;
@@ -396,7 +395,7 @@ function drawBg(camX, color1, color2) {
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, bgWidth, bgHeight);
     }
-}
+    // جبال في المقدمة
     const p=(camX*0.15)%CW;
     ctx.fillStyle='rgba(20,15,40,0.8)';
     for(let i=0;i<8;i++){
@@ -404,8 +403,12 @@ function drawBg(camX, color1, color2) {
       const bh=80+(i*73)%120,bw=50+(i*43)%60;
       ctx.fillRect(px(bx),CH-bh,px(bw),bh);
       ctx.fillStyle='rgba(200,180,50,0.22)';
-      for(let wy=10;wy<bh-10;wy+=18)for(let wx=8;wx<bw-8;wx+=16)if((i+wy+wx)%3!==0)ctx.fillRect(px(bx+wx),CH-bh+wy,8,10);
+      for(let wy=10;wy<bh-10;wy+=18)
+        for(let wx=8;wx<bw-8;wx+=16)
+          if((i+wy+wx)%3!==0)ctx.fillRect(px(bx+wx),CH-bh+wy,8,10);
       ctx.fillStyle='rgba(20,15,40,0.8)';
+    }
+}
     }
   
 
