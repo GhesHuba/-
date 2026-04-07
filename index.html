@@ -413,6 +413,7 @@ function drawBg(camX, color1, color2) {
             // رسم الصورة الثانية ملتصقة تماماً بنهاية الأولى
             ctx.drawImage(bg2, startX + _w, 0, _w, _h);
         }
+      }
     } else {
         // خلفية احتياطية (تدرج لوني) في حال لم يتم تحميل الصور
         const g = ctx.createLinearGradient(0, 0, 0, CH);
