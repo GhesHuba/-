@@ -388,38 +388,39 @@ for (let i = 1; i <= NUM_LEVELS; i++) {
     dark:{top:'#5A4A6A',wall:'#3A2A4A',line:'#1A0A2A'},
     }
 function drawBg(camX, color1, color2) {
-    // جلب الأبعاد المحددة أو استخدام قيم افتراضية لمنع الخطأ
-    const _w = (typeof bgWidth !== 'undefined') ? bgWidth : (typeof CW !== 'undefined' ? CW : 800);
-    const _h = (typeof bgHeight !== 'undefined') ? bgHeight : (typeof CH !== 'undefined' ? CH : 600);
+    // استخدام الأبعاد التي حددتها (1920x560)
+    const _w = window.bgWidth || 1920;
+    const _h = window.bgHeight || 560;
 
     const lvId = (G.lv && G.lv.id) ? G.lv.id : 1;
     
-    // محاولة جلب الصور من المصفوفة
+    // جلب الصور (تأكد أن مستوى الصور رقم 8 مضاف في المصفوفة)
     const bg1 = (typeof levelBgImgs !== 'undefined' && levelBgImgs[lvId]) ? levelBgImgs[lvId][0] : null;
     const bg2 = (typeof levelBgImgs !== 'undefined' && levelBgImgs[lvId]) ? levelBgImgs[lvId][1] : null;
 
-    // فحص الأمان: هل الصور موجودة، محملة بالكامل، وليست "مكسورة"؟
-    const isBgReady = bg1 && bg1.complete && bg1.naturalWidth > 0 && 
-                      bg2 && bg2.complete && bg2.naturalWidth > 0;
+    // فحص الأمان: هل الصور موجودة وجاهزة؟
+    if (bg1 && bg1.complete && bg1.naturalWidth > 0) {
+        const scrollSpeed = 0.5; // سرعة تحرك الجبال (0.5 تعني تتحرك بنصف سرعة اللاعب)
+        const totalWidth = _w;
+        
+        // حساب موقع البداية (التكرار اللانهائي)
+        let xOffset = -(camX * scrollSpeed) % totalWidth;
 
-    if (isBgReady) {
-        try {
-            const scrollSpeed = 0.5; // سرعة تحرك الجبال
-            const totalWidth = _w * 2;
-            let xOffset = -(camX * scrollSpeed) % totalWidth;
-
-            for (let i = 0; i < 2; i++) {
-                let startX = xOffset + (i * totalWidth);
-                ctx.drawImage(bg1, startX, 0, _w, _h);
-                ctx.drawImage(bg2, startX + _w, 0, _w, _h);
-            }
-        } catch (err) {
-            // في حال حدوث أي خطأ مفاجئ أثناء الرسم، ننتقل للاحتياطي
-            drawFallback(color1, color2, _w, _h);
+        // رسم الصورة مرتين بجانب بعضهما لضمان عدم وجود فراغ
+        ctx.drawImage(bg1, xOffset, 0, _w, _h);
+        ctx.drawImage(bg1, xOffset + _w, 0, _w, _h);
+        
+        // إذا كان هناك فراغ بسيط في نهاية الشاشة، ارسم نسخة ثالثة
+        if (xOffset + _w < (window.CW || 1800)) {
+            ctx.drawImage(bg1, xOffset + (_w * 2), 0, _w, _h);
         }
     } else {
-        // إذا لم تكن الصور جاهزة (مثلاً g8.png مفقودة)، ارسم خلفية ملونة
-        drawFallback(color1, color2, _w, _h);
+        // إذا لم تتوفر الصور، ارسم تدرج لوني كخلفية احتياطية
+        const g = ctx.createLinearGradient(0, 0, 0, _h);
+        g.addColorStop(0, color1 || '#000033');
+        g.addColorStop(1, color2 || '#000066');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, (window.CW || 1920), _h);
     }
 }
 
