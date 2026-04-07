@@ -388,40 +388,48 @@ for (let i = 1; i <= NUM_LEVELS; i++) {
     dark:{top:'#5A4A6A',wall:'#3A2A4A',line:'#1A0A2A'},
     }
 function drawBg(camX, color1, color2) {
-    // استخدام عرض الشاشة كبديل في حال عدم تعريف bgWidth
-    const _w = (typeof bgWidth !== 'undefined') ? bgWidth : CW;
-    const _h = (typeof bgHeight !== 'undefined') ? bgHeight : CH;
+    // جلب الأبعاد المحددة أو استخدام قيم افتراضية لمنع الخطأ
+    const _w = (typeof bgWidth !== 'undefined') ? bgWidth : (typeof CW !== 'undefined' ? CW : 800);
+    const _h = (typeof bgHeight !== 'undefined') ? bgHeight : (typeof CH !== 'undefined' ? CH : 600);
 
     const lvId = (G.lv && G.lv.id) ? G.lv.id : 1;
-    const bg1 = (levelBgImgs[lvId] && levelBgImgs[lvId][0]) ? levelBgImgs[lvId][0] : null;
-    const bg2 = (levelBgImgs[lvId] && levelBgImgs[lvId][1]) ? levelBgImgs[lvId][1] : null;
+    
+    // محاولة جلب الصور من المصفوفة
+    const bg1 = (typeof levelBgImgs !== 'undefined' && levelBgImgs[lvId]) ? levelBgImgs[lvId][0] : null;
+    const bg2 = (typeof levelBgImgs !== 'undefined' && levelBgImgs[lvId]) ? levelBgImgs[lvId][1] : null;
 
-    if (bg1 && bg1.complete && bg2 && bg2.complete) {
-        const scrollSpeed = 0.5; // سرعة حركة الخلفية
-        const totalWidth = _w * 2; // عرض الصورتين معاً
-        
-        // حساب موقع البداية بناءً على حركة الكاميرا
-        let xOffset = -(camX * scrollSpeed) % totalWidth;
+    // فحص الأمان: هل الصور موجودة، محملة بالكامل، وليست "مكسورة"؟
+    const isBgReady = bg1 && bg1.complete && bg1.naturalWidth > 0 && 
+                      bg2 && bg2.complete && bg2.naturalWidth > 0;
 
-        // رسم دورتين متتاليتين لضمان عدم وجود فراغات أثناء الحركة
-        for (let i = 0; i < 2; i++) {
-            let startX = xOffset + (i * totalWidth);
-            
-            // رسم الصورة الأولى
-            ctx.drawImage(bg1, startX, 0, _w, _h);
-            
-            // رسم الصورة الثانية ملتصقة تماماً بنهاية الأولى
-            ctx.drawImage(bg2, startX + _w, 0, _w, _h);
+    if (isBgReady) {
+        try {
+            const scrollSpeed = 0.5; // سرعة تحرك الجبال
+            const totalWidth = _w * 2;
+            let xOffset = -(camX * scrollSpeed) % totalWidth;
+
+            for (let i = 0; i < 2; i++) {
+                let startX = xOffset + (i * totalWidth);
+                ctx.drawImage(bg1, startX, 0, _w, _h);
+                ctx.drawImage(bg2, startX + _w, 0, _w, _h);
+            }
+        } catch (err) {
+            // في حال حدوث أي خطأ مفاجئ أثناء الرسم، ننتقل للاحتياطي
+            drawFallback(color1, color2, _w, _h);
         }
-      }
-     else {
-        // خلفية احتياطية (تدرج لوني) في حال لم يتم تحميل الصور
-        const g = ctx.createLinearGradient(0, 0, 0, CH);
-        g.addColorStop(0, color1);
-        g.addColorStop(1, color2);
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, CW, CH);
+    } else {
+        // إذا لم تكن الصور جاهزة (مثلاً g8.png مفقودة)، ارسم خلفية ملونة
+        drawFallback(color1, color2, _w, _h);
     }
+}
+
+// دالة الرسم الاحتياطي لمنع الشاشة السوداء
+function drawFallback(c1, c2, w, h) {
+    const gradient = ctx.createLinearGradient(0, 0, 0, h);
+    gradient.addColorStop(0, c1 || '#0a0020'); // لون السماء العلوي
+    gradient.addColorStop(1, c2 || '#1a0530'); // لون السماء السفلي
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, w, h);
 }
 
   function drawPlat(x,y,w,h,type){
