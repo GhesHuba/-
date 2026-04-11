@@ -1,53 +1,9 @@
 <!DOCTYPE html>
-<script src="/__replco/static/devtools/injected.js" onerror="parent.postMessage({event:'error',payload:'script.onerror: Failed to load '+event.target.src},'https://replit.com')"></script>
-<!DOCTYPE html>
 <html lang="ar" dir="rtl">
     <head>
-        <script type="module">
-            import {createHotContext} from "/@vite/client";
-            const hot = createHotContext("/__dummy__runtime-error-plugin");
-
-            function sendError(error) {
-                if (!(error instanceof Error)) {
-                    error = new Error("(unknown runtime error)");
-                }
-                const serialized = {
-                    message: error.message,
-                    stack: error.stack,
-                };
-                hot.send("runtime-error-plugin:error", serialized);
-            }
-
-            // Only notify the parent frame after the server confirms the error passed
-            // the filter and the overlay will be shown.
-            hot.on("runtime-error-plugin:notify-parent", () => {
-                try {
-                    window.parent.postMessage({
-                        type: "runtime-error",
-                        id: null
-                    }, "*");
-                } catch (_) {}
-            }
-            );
-
-            window.addEventListener("error", (evt) => {
-                sendError(evt.error);
-            }
-            );
-
-            window.addEventListener("unhandledrejection", (evt) => {
-                sendError(evt.reason);
-            }
-            );
-        </script>
-        <script type="module">
-            import {injectIntoGlobalHook} from "/@react-refresh";
-            injectIntoGlobalHook(window);
-            window.$RefreshReg$ = () => {}
-            ;
-            window.$RefreshSig$ = () => (type) => type;
-        </script>
-        <script type="module" src="/@vite/client"></script>
+        
+        
+        
         <meta charset="UTF-8"/>
         <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
         <title>ستالين - طريق إلى السلطة</title>
@@ -3171,37 +3127,37 @@
                 // كل مرحلة لها صورتان: img1 للنصف الأول، img2 للنصف الثاني
                 const BG_SRC = {
                     1: {
-                        img1: './level1-bg.png',
-                        img2: './level1-bg.png'
+                        img1: 'https://raw.githubusercontent.com/GhesHuba/-/main/g1.png',
+                        img2: 'https://raw.githubusercontent.com/GhesHuba/-/main/g1.1.png'
                     },
                     2: {
-                        img1: './level2-bg.png',
-                        img2: './level2-bg.png'
+                        img1: 'https://raw.githubusercontent.com/GhesHuba/-/main/g2.png',
+                        img2: 'https://raw.githubusercontent.com/GhesHuba/-/main/g2.1.png'
                     },
                     3: {
-                        img1: './level1-bg.png',
-                        img2: './level2-bg.png'
+                        img1: 'https://raw.githubusercontent.com/GhesHuba/-/main/g3.png',
+                        img2: 'https://raw.githubusercontent.com/GhesHuba/-/main/g3.1.png'
                     },
                     4: {
-                        img1: './level2-bg.png',
-                        img2: './level1-bg.png'
+                        img1: 'https://raw.githubusercontent.com/GhesHuba/-/main/g4.png',
+                        img2: 'https://raw.githubusercontent.com/GhesHuba/-/main/g4.1.png'
                     },
                     5: {
-                        img1: './level1-bg.png',
-                        img2: './level2-bg.png'
+                        img1: 'https://raw.githubusercontent.com/GhesHuba/-/main/g5.png',
+                        img2: 'https://raw.githubusercontent.com/GhesHuba/-/main/g5.1.png'
                     },
                     6: {
-                        img1: './level2-bg.png',
-                        img2: './level1-bg.png'
+                        img1: 'https://raw.githubusercontent.com/GhesHuba/-/main/g6.png',
+                        img2: 'https://raw.githubusercontent.com/GhesHuba/-/main/g6.1.png'
                     },
                     7: {
-                        img1: './level2-bg.png',
-                        img2: './level1-bg.png'
+                        img1: 'https://raw.githubusercontent.com/GhesHuba/-/main/g7.png',
+                        img2: 'https://raw.githubusercontent.com/GhesHuba/-/main/g7.1.png'
                     },
                     8: {
-                        img1: './level2-bg.png',
-                        img2: './level2-bg.png'
-                    },
+                        img1: 'https://raw.githubusercontent.com/GhesHuba/-/main/g8.png',
+                        img2: 'https://raw.githubusercontent.com/GhesHuba/-/main/g8.1.png'
+                    }
                 };
                 const bgImgCache = {};
                 function getBgImg(lvId, part) {
@@ -3212,7 +3168,7 @@
                     if (!src)
                         return null;
                     const img = new Image();
-
+                    img.crossOrigin = 'anonymous';
                     img.src = src;
                     bgImgCache[k] = img;
                     return img;
@@ -4877,9 +4833,11 @@
                 ctrlEl.classList.remove('active');
                 playLevelJingle();
                 let dismissed = false;
+                let pressCount = 0;
                 function dismissTrans() {
-                    if (dismissed)
-                        return;
+                    if (dismissed) return;
+                    pressCount++;
+                    if (pressCount < 2) return;
                     dismissed = true;
                     lvlTrans.classList.remove('active');
                     document.removeEventListener('keydown', dismissTrans);
@@ -4888,24 +4846,16 @@
                     // Auto-advance to next level after transition is dismissed
                     const _gx = window.getG ? window.getG() : null;
                     if (_gx && _gx.state === 'levelComplete' && typeof window.nextLevel === 'function') {
-                        setTimeout( () => {
+                        setTimeout(() => {
                             if (window.getG && window.getG().state === 'levelComplete')
                                 window.nextLevel();
-                        }
-                        , 100);
+                        }, 100);
                     }
                 }
-                document.addEventListener('keydown', dismissTrans, {
-                    once: true
-                });
-                lvlTrans.addEventListener('touchstart', dismissTrans, {
-                    once: true,
-                    passive: true
-                });
-                lvlTrans.addEventListener('click', dismissTrans, {
-                    once: true
-                });
-                setTimeout(dismissTrans, 5000);
+                document.addEventListener('keydown', dismissTrans);
+                lvlTrans.addEventListener('touchstart', dismissTrans, { passive: true });
+                lvlTrans.addEventListener('click', dismissTrans);
+                setTimeout(() => { pressCount = 2; dismissTrans(); }, 15000);
             }
 
             function playLevelJingle() {
