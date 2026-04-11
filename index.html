@@ -1,437 +1,3124 @@
-<!DOCTYPE html><script src="/__replco/static/devtools/injected.js"onerror="parent.postMessage({event:'error',payload:'script.onerror: Failed to load '+event.target.src},'https://replit.com')"></script>
+<!DOCTYPE html>
+<script src="/__replco/static/devtools/injected.js" onerror="parent.postMessage({event:'error',payload:'script.onerror: Failed to load '+event.target.src},'https://replit.com')"></script>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>ستالين - طريق إلى السلطة</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet"/>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;overflow:hidden;width:100vw;height:100vh;font-family:'Cairo',sans-serif}
-#gc{display:block;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);visibility:hidden}
+    <head>
+        <script type="module">
+            import {createHotContext} from "/@vite/client";
+            const hot = createHotContext("/__dummy__runtime-error-plugin");
 
-/* Menu Overlay */
-#menu-overlay{
-  position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:#0d0000 url('./menu-bg.png') center/cover no-repeat;z-index:100;transition:opacity .5s;
-}
-#menu-overlay::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(to bottom,rgba(0,0,0,0.2) 0%,rgba(60,0,0,0.45) 45%,rgba(0,0,0,0.97) 100%);
-}
-#menu-overlay.hidden{opacity:0;pointer-events:none}
-.menu-inner{position:relative;z-index:2;text-align:center;padding:20px}
-.menu-title{
-  font-family:'Amiri',serif;font-size:clamp(30px,7vw,70px);color:#FFD700;
-  text-shadow:0 0 25px rgba(255,100,0,0.9),2px 2px 10px #000;
-  letter-spacing:4px;margin-bottom:4px;
-}
-.menu-subtitle{
-  font-size:clamp(14px,2.5vw,22px);color:#e8c87a;text-shadow:1px 1px 6px #000;
-  margin-bottom:clamp(24px,5vw,48px);letter-spacing:2px;
-}
-.menu-star{color:#cc0000;font-size:1.4em;margin:0 6px}
-.menu-btn{
-  display:block;width:clamp(200px,45vw,320px);padding:14px 0;margin:10px auto;
-  background:linear-gradient(135deg,#6b0000 0%,#9b1500 40%,#6b0000 100%);
-  border:2px solid #cc9900;color:#FFD700;
-  font-family:'Cairo',sans-serif;font-size:clamp(16px,3.5vw,22px);font-weight:700;
-  letter-spacing:2px;cursor:pointer;
-  clip-path:polygon(10px 0%,calc(100% - 10px) 0%,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0% calc(100% - 10px),0% 10px);
-  transition:all .18s;text-shadow:1px 1px 4px rgba(0,0,0,0.8);
-}
-.menu-btn:hover,.menu-btn:active{
-  background:linear-gradient(135deg,#9b1500 0%,#cc2200 40%,#9b1500 100%);
-  transform:scale(1.06);box-shadow:0 0 24px rgba(255,80,0,0.45);color:#fff;
-}
-.menu-sickle{font-size:clamp(32px,6vw,56px);margin-bottom:8px}
+            function sendError(error) {
+                if (!(error instanceof Error)) {
+                    error = new Error("(unknown runtime error)");
+                }
+                const serialized = {
+                    message: error.message,
+                    stack: error.stack,
+                };
+                hot.send("runtime-error-plugin:error", serialized);
+            }
 
-/* Game Over */
-#gameover-overlay{
-  position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;
-  background:url('./gameover-bg.png') center/cover no-repeat;z-index:200;
-}
-#gameover-overlay::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(to bottom,rgba(0,0,0,0.1),rgba(100,0,0,0.65) 50%,rgba(0,0,0,0.92));
-}
-#gameover-overlay.active{display:flex}
-.go-inner{position:relative;z-index:2;text-align:center;padding:20px}
-.go-title{
-  font-family:'Amiri',serif;font-size:clamp(36px,8vw,90px);color:#FF2200;
-  text-shadow:0 0 30px rgba(255,0,0,0.95),2px 2px 12px #000;
-  animation:pulsRed 1.1s infinite alternate;margin-bottom:12px;
-}
-.go-score{font-size:clamp(16px,3vw,26px);color:#FFD700;text-shadow:1px 1px 4px #000;margin-bottom:32px;font-weight:700}
-@keyframes pulsRed{from{text-shadow:0 0 20px rgba(255,0,0,0.5),2px 2px 8px #000}to{text-shadow:0 0 50px rgba(255,0,0,1),2px 2px 14px #000}}
+            // Only notify the parent frame after the server confirms the error passed
+            // the filter and the overlay will be shown.
+            hot.on("runtime-error-plugin:notify-parent", () => {
+                try {
+                    window.parent.postMessage({
+                        type: "runtime-error",
+                        id: null
+                    }, "*");
+                } catch (_) {}
+            }
+            );
 
-/* Level Transition */
-#lvl-transition{
-  position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;
-  z-index:150;background:#000;
-}
-#lvl-transition.active{display:flex}
-#lvl-transition-bg{
-  position:absolute;inset:0;background-size:cover;background-position:center;
-  opacity:0;transition:opacity .7s;
-}
-#lvl-transition-bg.show{opacity:1}
-#lvl-transition::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(to bottom,rgba(0,0,0,0.35),rgba(0,0,0,0.15) 40%,rgba(0,0,0,0.6));
-  z-index:1;
-}
-.lvl-inner{position:relative;z-index:2;text-align:center;padding:20px}
-.lvl-num{
-  font-size:clamp(14px,2.5vw,20px);color:#e8c87a;text-shadow:1px 1px 6px #000;
-  letter-spacing:5px;margin-bottom:8px;opacity:.9;
-}
-.lvl-name{
-  font-family:'Amiri',serif;font-size:clamp(32px,8vw,86px);color:#FFD700;
-  text-shadow:0 0 25px rgba(255,200,0,0.7),2px 2px 12px #000;
-  animation:lvlFade .9s ease;margin-bottom:18px;
-}
-@keyframes lvlFade{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-.lvl-stars{font-size:clamp(22px,5vw,50px);letter-spacing:10px;animation:lvlFade 1s .45s both;color:#FFD700}
+            window.addEventListener("error", (evt) => {
+                sendError(evt.error);
+            }
+            );
 
-/* Question Box */
-#q-overlay{
-  position:fixed;inset:0;display:none;align-items:center;justify-content:center;
-  background:rgba(0,0,0,0.78);z-index:300;backdrop-filter:blur(5px);
-}
-#q-overlay.active{display:flex}
-.q-box{
-  position:relative;width:min(540px,95vw);max-height:92vh;overflow-y:auto;
-  background:linear-gradient(160deg,#200505 0%,#150202 50%,#080000 100%);
-  border:3px solid #7a0000;border-top:3px solid #bb1a00;
-  border-radius:2px;padding:0;
-  box-shadow:0 0 70px rgba(180,0,0,0.35),inset 0 0 50px rgba(0,0,0,0.6);
-}
-.q-box::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:5px;
-  background:linear-gradient(90deg,#6b0000,#FFD700 30%,#cc1a00 60%,#FFD700 80%,#6b0000);
-  z-index:1;
-}
-.q-header{
-  background:linear-gradient(135deg,#5c0000,#3a0000);padding:14px 20px 12px;
-  border-bottom:2px solid #8B0000;text-align:center;
-}
-.q-header-icon{font-size:30px;display:block;margin-bottom:3px}
-.q-header-title{color:#FFD700;font-family:'Amiri',serif;font-size:19px;letter-spacing:2px;font-weight:700}
-.q-level-badge{
-  display:inline-block;background:linear-gradient(135deg,#cc9900,#FFD700);
-  color:#1a0808;font-size:11px;font-weight:900;padding:3px 12px;border-radius:2px;
-  margin-top:5px;letter-spacing:2px;
-}
-.q-text{
-  color:#f0e0c8;font-size:clamp(14px,3.5vw,18px);line-height:1.75;
-  padding:20px 22px 16px;text-align:center;font-weight:600;
-  border-bottom:1px solid rgba(180,0,0,0.35);
-}
-.q-options{padding:14px 16px 6px}
-.q-opt{
-  display:flex;align-items:flex-start;gap:13px;
-  padding:12px 15px;margin-bottom:11px;
-  background:rgba(255,255,255,0.035);border:1.5px solid rgba(180,0,0,0.28);
-  border-radius:2px;cursor:pointer;transition:all .18s;color:#ddc898;
-  font-size:clamp(13px,3vw,16px);line-height:1.55;
-}
-.q-opt:hover,.q-opt:active{
-  background:rgba(180,0,0,0.22);border-color:#bb1a00;
-  box-shadow:0 0 14px rgba(180,0,0,0.3);color:#FFD700;transform:translateX(-5px);
-}
-.q-opt-letter{
-  min-width:32px;height:32px;
-  background:linear-gradient(135deg,#6b0000,#9b1000);
-  color:#FFD700;font-size:14px;font-weight:900;
-  display:flex;align-items:center;justify-content:center;
-  border-radius:50%;flex-shrink:0;margin-top:2px;
-  box-shadow:0 2px 7px rgba(0,0,0,0.5);border:1px solid rgba(255,180,0,0.3);
-}
-.q-opt.correct{background:rgba(0,130,0,0.22);border-color:#00aa00;color:#80ff80}
-.q-opt.wrong{background:rgba(180,0,0,0.22);border-color:#aa0000;color:#ff8080}
-.q-footer{
-  display:flex;align-items:center;justify-content:center;gap:12px;
-  padding:10px 20px 2px;color:rgba(180,140,80,0.45);font-size:12px;letter-spacing:4px;
-}
-.q-star-row{font-size:16px;color:rgba(180,140,80,0.45)}
+            window.addEventListener("unhandledrejection", (evt) => {
+                sendError(evt.reason);
+            }
+            );
+        </script>
+        <script type="module">
+            import {injectIntoGlobalHook} from "/@react-refresh";
+            injectIntoGlobalHook(window);
+            window.$RefreshReg$ = () => {}
+            ;
+            window.$RefreshSig$ = () => (type) => type;
+        </script>
+        <script type="module" src="/@vite/client"></script>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+        <title>ستالين - طريق إلى السلطة</title>
+        <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet"/>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box
+            }
 
-/* q-btn: game-created answer buttons */
-.q-btn{
-  display:flex;align-items:flex-start;gap:13px;
-  width:100%;padding:12px 15px;margin-bottom:11px;
-  background:rgba(255,255,255,0.035);border:1.5px solid rgba(180,0,0,0.28);
-  border-radius:2px;cursor:pointer;transition:all .18s;color:#ddc898;
-  font-size:clamp(13px,3vw,16px);line-height:1.55;text-align:right;
-  font-family:'Cairo',sans-serif;font-weight:600;
-}
-.q-btn:hover,.q-btn:active:not(:disabled){
-  background:rgba(180,0,0,0.22);border-color:#bb1a00;
-  box-shadow:0 0 14px rgba(180,0,0,0.3);color:#FFD700;
-}
-.q-btn:disabled{opacity:.65}
-#q-result.correct{color:#80ff80}
-#q-result.wrong{color:#ff8080}
+            body {
+                background: #000;
+                overflow: hidden;
+                width: 100vw;
+                height: 100vh;
+                font-family: 'Cairo',sans-serif
+            }
 
-/* Shop */
-#shop-overlay{
-  position:fixed;inset:0;display:none;align-items:center;justify-content:center;
-  background:rgba(0,0,0,0.88);z-index:400;backdrop-filter:blur(4px);
-}
-#shop-overlay.active{display:flex}
-.shop-box{
-  width:min(490px,95vw);max-height:90vh;overflow-y:auto;
-  background:linear-gradient(160deg,#0c0000,#160404,#080000);
-  border:3px solid #7a0000;border-top:3px solid #FFD700;border-radius:2px;
-  box-shadow:0 0 70px rgba(180,0,0,0.3);
-}
-.shop-header{
-  background:linear-gradient(135deg,#4a0000,#6b0000);padding:18px 20px;
-  text-align:center;position:sticky;top:0;z-index:2;
-  border-bottom:2px solid #FFD700;
-}
-.shop-title{color:#FFD700;font-family:'Amiri',serif;font-size:24px;margin-bottom:5px}
-.shop-coins-display{color:#FFD700;font-size:20px;font-weight:700}
-.shop-items{padding:16px}
-.shop-item{
-  display:flex;align-items:center;gap:14px;padding:14px;margin-bottom:13px;
-  background:rgba(255,255,255,0.035);border:1.5px solid rgba(180,0,0,0.28);border-radius:2px;
-}
-.shop-item-icon{font-size:38px;flex-shrink:0}
-.shop-item-info{flex:1}
-.shop-item-name{color:#FFD700;font-size:17px;font-weight:700;margin-bottom:3px}
-.shop-item-desc{color:#a08060;font-size:13px}
-.shop-item-price{color:#FFD700;font-size:15px;margin-top:4px;font-weight:700}
-.shop-buy-btn{
-  padding:9px 18px;
-  background:linear-gradient(135deg,#6b0000,#9b1500);
-  border:2px solid #cc9900;color:#FFD700;font-family:'Cairo',sans-serif;
-  font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;
-  clip-path:polygon(6px 0%,calc(100% - 6px) 0%,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0% calc(100% - 6px),0% 6px);
-  transition:all .18s;
-}
-.shop-buy-btn:hover{background:linear-gradient(135deg,#9b1500,#cc2200);transform:scale(1.06)}
-.shop-buy-btn:disabled{opacity:.38;cursor:not-allowed;transform:none}
-.shop-close-btn{
-  width:calc(100% - 32px);margin:6px 16px 16px;padding:13px;
-  background:rgba(80,0,0,0.4);border:2px solid #7a0000;
-  color:#ddc898;font-family:'Cairo',sans-serif;font-size:17px;font-weight:700;
-  cursor:pointer;transition:all .2s;
-}
-.shop-close-btn:hover{background:rgba(120,0,0,0.5)}
+            #gc {
+                display: block;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%,-50%);
+                visibility: hidden;
+                pointer-events: none
+            }
 
-/* How To Play */
-#howto-overlay{
-  position:fixed;inset:0;display:none;align-items:center;justify-content:center;
-  background:rgba(0,0,0,0.92);z-index:400;backdrop-filter:blur(4px);
-}
-#howto-overlay.active{display:flex}
-.howto-box{
-  width:min(510px,95vw);max-height:90vh;overflow-y:auto;
-  background:linear-gradient(160deg,#0c0000,#160404,#080000);
-  border:3px solid #7a0000;border-top:3px solid #FFD700;border-radius:2px;
-  padding:0 0 20px;box-shadow:0 0 70px rgba(180,0,0,0.3);
-}
-.howto-header{
-  background:linear-gradient(135deg,#4a0000,#6b0000);padding:18px 20px;
-  text-align:center;border-bottom:2px solid #FFD700;position:sticky;top:0;z-index:2;
-}
-.howto-title{color:#FFD700;font-family:'Amiri',serif;font-size:24px}
-.howto-body{padding:22px}
-.howto-section{margin-bottom:22px}
-.howto-section-title{
-  color:#FFD700;font-size:15px;font-weight:700;margin-bottom:12px;
-  padding-bottom:5px;border-bottom:1px solid rgba(180,0,0,0.35);
-}
-.howto-row{
-  display:flex;align-items:center;gap:14px;margin-bottom:11px;color:#ddc898;font-size:14px;
-}
-.howto-key{
-  background:rgba(180,0,0,0.28);border:1.5px solid #7a0000;
-  color:#FFD700;padding:4px 11px;border-radius:2px;font-size:13px;
-  font-weight:700;white-space:nowrap;flex-shrink:0;font-family:monospace;
-}
-.howto-icon{font-size:22px;flex-shrink:0;width:32px;text-align:center}
-.howto-close-btn{
-  width:calc(100% - 32px);margin:8px 16px 0;padding:13px;
-  background:rgba(80,0,0,0.4);border:2px solid #7a0000;
-  color:#ddc898;font-family:'Cairo',sans-serif;font-size:17px;font-weight:700;
-  cursor:pointer;transition:all .2s;
-}
-.howto-close-btn:hover{background:rgba(120,0,0,0.5)}
+            /* Menu Overlay */
+            #menu-overlay {
+                position: fixed;
+                inset: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                background: #0d0000 url('https://raw.githubusercontent.com/GhesHuba/-/main/f.png') center/cover no-repeat;
+                z-index: 100;
+                transition: opacity .5s;
+            }
 
-/* Mobile Controls */
-#mobile-controls{
-  position:fixed;bottom:0;left:0;right:0;
-  display:none;align-items:flex-end;justify-content:space-between;
-  padding:0 14px 18px;z-index:50;pointer-events:none;
-  background:linear-gradient(to top,rgba(0,0,0,0.45) 0%,transparent 100%);
+            #menu-overlay::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(to bottom,rgba(0,0,0,0.2) 0%,rgba(60,0,0,0.45) 45%,rgba(0,0,0,0.97) 100%);
+            }
+
+            #menu-overlay.hidden {
+                opacity: 0;
+                pointer-events: none
+            }
+
+            .menu-inner {
+                position: relative;
+                z-index: 2;
+                text-align: center;
+                padding: 20px
+            }
+
+            .menu-title {
+                font-family: 'Amiri',serif;
+                font-size: clamp(30px,7vw,70px);
+                color: #FFD700;
+                text-shadow: 0 0 25px rgba(255,100,0,0.9),2px 2px 10px #000;
+                letter-spacing: 4px;
+                margin-bottom: 4px;
+            }
+
+            .menu-subtitle {
+                font-size: clamp(14px,2.5vw,22px);
+                color: #e8c87a;
+                text-shadow: 1px 1px 6px #000;
+                margin-bottom: clamp(24px,5vw,48px);
+                letter-spacing: 2px;
+            }
+
+            .menu-star {
+                color: #cc0000;
+                font-size: 1.4em;
+                margin: 0 6px
+            }
+
+            .menu-btn {
+                display: block;
+                width: clamp(200px,45vw,320px);
+                padding: 14px 0;
+                margin: 10px auto;
+                background: linear-gradient(135deg,#6b0000 0%,#9b1500 40%,#6b0000 100%);
+                border: 2px solid #cc9900;
+                color: #FFD700;
+                font-family: 'Cairo',sans-serif;
+                font-size: clamp(16px,3.5vw,22px);
+                font-weight: 700;
+                letter-spacing: 2px;
+                cursor: pointer;
+                clip-path: polygon(10px 0%,calc(100% - 10px) 0%,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0% calc(100% - 10px),0% 10px);
+                transition: all .18s;
+                text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+            }
+
+            .menu-btn:hover,.menu-btn:active {
+                background: linear-gradient(135deg,#9b1500 0%,#cc2200 40%,#9b1500 100%);
+                transform: scale(1.06);
+                box-shadow: 0 0 24px rgba(255,80,0,0.45);
+                color: #fff;
+            }
+
+            .menu-sickle {
+                font-size: clamp(32px,6vw,56px);
+                margin-bottom: 8px
+            }
+
+            /* Game Over */
+            #gameover-overlay {
+                position: fixed;
+                inset: 0;
+                display: none;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                background: url('https://raw.githubusercontent.com/GhesHuba/-/main/g.png') center/cover no-repeat;
+                z-index: 200;
+            }
+
+            #gameover-overlay::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(to bottom,rgba(0,0,0,0.1),rgba(100,0,0,0.65) 50%,rgba(0,0,0,0.92));
+            }
+
+            #gameover-overlay.active {
+                display: flex
+            }
+
+            .go-inner {
+                position: relative;
+                z-index: 2;
+                text-align: center;
+                padding: 20px
+            }
+
+            .go-title {
+                font-family: 'Amiri',serif;
+                font-size: clamp(36px,8vw,90px);
+                color: #FF2200;
+                text-shadow: 0 0 30px rgba(255,0,0,0.95),2px 2px 12px #000;
+                animation: pulsRed 1.1s infinite alternate;
+                margin-bottom: 12px;
+            }
+
+            .go-score {
+                font-size: clamp(16px,3vw,26px);
+                color: #FFD700;
+                text-shadow: 1px 1px 4px #000;
+                margin-bottom: 32px;
+                font-weight: 700
+            }
+
+            @keyframes pulsRed {
+                from {
+                    text-shadow: 0 0 20px rgba(255,0,0,0.5),2px 2px 8px #000
+                }
+
+                to {
+                    text-shadow: 0 0 50px rgba(255,0,0,1),2px 2px 14px #000
+                }
+            }
+
+            /* Level Transition */
+            #lvl-transition {
+                position: fixed;
+                inset: 0;
+                display: none;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                z-index: 150;
+                background: #000;
+            }
+
+            #lvl-transition.active {
+                display: flex
+            }
+
+            #lvl-transition-bg {
+                position: absolute;
+                inset: 0;
+                background-size: cover;
+                background-position: center;
+                opacity: 0;
+                transition: opacity .7s;
+            }
+
+            #lvl-transition-bg.show {
+                opacity: 1
+            }
+
+            #lvl-transition::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(to bottom,rgba(0,0,0,0.35),rgba(0,0,0,0.15) 40%,rgba(0,0,0,0.6));
+                z-index: 1;
+            }
+
+            .lvl-inner {
+                position: relative;
+                z-index: 2;
+                text-align: center;
+                padding: 20px
+            }
+
+            .lvl-num {
+                font-size: clamp(14px,2.5vw,20px);
+                color: #e8c87a;
+                text-shadow: 1px 1px 6px #000;
+                letter-spacing: 5px;
+                margin-bottom: 8px;
+                opacity: .9;
+            }
+
+            .lvl-name {
+                font-family: 'Amiri',serif;
+                font-size: clamp(32px,8vw,86px);
+                color: #FFD700;
+                text-shadow: 0 0 25px rgba(255,200,0,0.7),2px 2px 12px #000;
+                animation: lvlFade .9s ease;
+                margin-bottom: 18px;
+            }
+
+            @keyframes lvlFade {
+                from {
+                    opacity: 0;
+                    transform: translateY(24px)
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0)
+                }
+            }
+
+            .lvl-stars {
+                font-size: clamp(22px,5vw,50px);
+                letter-spacing: 10px;
+                animation: lvlFade 1s .45s both;
+                color: #FFD700
+            }
+
+            /* Question Box */
+            #q-overlay {
+                position: fixed;
+                inset: 0;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                background: rgba(0,0,0,0.78);
+                z-index: 300;
+                backdrop-filter: blur(5px);
+            }
+
+            #q-overlay.active {
+                display: flex
+            }
+
+            .q-box {
+                position: relative;
+                width: min(540px,95vw);
+                max-height: 92vh;
+                overflow-y: auto;
+                background: linear-gradient(160deg,#200505 0%,#150202 50%,#080000 100%);
+                border: 3px solid #7a0000;
+                border-top: 3px solid #bb1a00;
+                border-radius: 2px;
+                padding: 0;
+                box-shadow: 0 0 70px rgba(180,0,0,0.35),inset 0 0 50px rgba(0,0,0,0.6);
+            }
+
+            .q-box::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 5px;
+                background: linear-gradient(90deg,#6b0000,#FFD700 30%,#cc1a00 60%,#FFD700 80%,#6b0000);
+                z-index: 1;
+            }
+
+            .q-header {
+                background: linear-gradient(135deg,#5c0000,#3a0000);
+                padding: 14px 20px 12px;
+                border-bottom: 2px solid #8B0000;
+                text-align: center;
+            }
+
+            .q-header-icon {
+                font-size: 30px;
+                display: block;
+                margin-bottom: 3px
+            }
+
+            .q-header-title {
+                color: #FFD700;
+                font-family: 'Amiri',serif;
+                font-size: 19px;
+                letter-spacing: 2px;
+                font-weight: 700
+            }
+
+            .q-level-badge {
+                display: inline-block;
+                background: linear-gradient(135deg,#cc9900,#FFD700);
+                color: #1a0808;
+                font-size: 11px;
+                font-weight: 900;
+                padding: 3px 12px;
+                border-radius: 2px;
+                margin-top: 5px;
+                letter-spacing: 2px;
+            }
+
+            .q-text {
+                color: #f0e0c8;
+                font-size: clamp(14px,3.5vw,18px);
+                line-height: 1.75;
+                padding: 20px 22px 16px;
+                text-align: center;
+                font-weight: 600;
+                border-bottom: 1px solid rgba(180,0,0,0.35);
+            }
+
+            .q-options {
+                padding: 14px 16px 6px
+            }
+
+            .q-opt {
+                display: flex;
+                align-items: flex-start;
+                gap: 13px;
+                padding: 12px 15px;
+                margin-bottom: 11px;
+                background: rgba(255,255,255,0.035);
+                border: 1.5px solid rgba(180,0,0,0.28);
+                border-radius: 2px;
+                cursor: pointer;
+                transition: all .18s;
+                color: #ddc898;
+                font-size: clamp(13px,3vw,16px);
+                line-height: 1.55;
+            }
+
+            .q-opt:hover,.q-opt:active {
+                background: rgba(180,0,0,0.22);
+                border-color: #bb1a00;
+                box-shadow: 0 0 14px rgba(180,0,0,0.3);
+                color: #FFD700;
+                transform: translateX(-5px);
+            }
+
+            .q-opt-letter {
+                min-width: 32px;
+                height: 32px;
+                background: linear-gradient(135deg,#6b0000,#9b1000);
+                color: #FFD700;
+                font-size: 14px;
+                font-weight: 900;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                flex-shrink: 0;
+                margin-top: 2px;
+                box-shadow: 0 2px 7px rgba(0,0,0,0.5);
+                border: 1px solid rgba(255,180,0,0.3);
+            }
+
+            .q-opt.correct {
+                background: rgba(0,130,0,0.22);
+                border-color: #00aa00;
+                color: #80ff80
+            }
+
+            .q-opt.wrong {
+                background: rgba(180,0,0,0.22);
+                border-color: #aa0000;
+                color: #ff8080
+            }
+
+            .q-footer {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
+                padding: 10px 20px 2px;
+                color: rgba(180,140,80,0.45);
+                font-size: 12px;
+                letter-spacing: 4px;
+            }
+
+            .q-star-row {
+                font-size: 16px;
+                color: rgba(180,140,80,0.45)
+            }
+
+            /* q-btn: game-created answer buttons */
+            .q-btn {
+                display: flex;
+                align-items: flex-start;
+                gap: 13px;
+                width: 100%;
+                padding: 12px 15px;
+                margin-bottom: 11px;
+                background: rgba(255,255,255,0.035);
+                border: 1.5px solid rgba(180,0,0,0.28);
+                border-radius: 2px;
+                cursor: pointer;
+                transition: all .18s;
+                color: #ddc898;
+                font-size: clamp(13px,3vw,16px);
+                line-height: 1.55;
+                text-align: right;
+                font-family: 'Cairo',sans-serif;
+                font-weight: 600;
+            }
+
+            .q-btn:hover,.q-btn:active:not(:disabled) {
+                background: rgba(180,0,0,0.22);
+                border-color: #bb1a00;
+                box-shadow: 0 0 14px rgba(180,0,0,0.3);
+                color: #FFD700;
+            }
+
+            .q-btn:disabled {
+                opacity: .65
+            }
+
+            #q-result.correct {
+                color: #80ff80
+            }
+
+            #q-result.wrong {
+                color: #ff8080
+            }
+
+            /* Shop */
+            #shop-overlay {
+                position: fixed;
+                inset: 0;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                background: rgba(0,0,0,0.88);
+                z-index: 400;
+                backdrop-filter: blur(4px);
+            }
+
+            #shop-overlay.active {
+                display: flex
+            }
+
+            .shop-box {
+                width: min(490px,95vw);
+                max-height: 90vh;
+                overflow-y: auto;
+                background: linear-gradient(160deg,#0c0000,#160404,#080000);
+                border: 3px solid #7a0000;
+                border-top: 3px solid #FFD700;
+                border-radius: 2px;
+                box-shadow: 0 0 70px rgba(180,0,0,0.3);
+            }
+
+            .shop-header {
+                background: linear-gradient(135deg,#4a0000,#6b0000);
+                padding: 18px 20px;
+                text-align: center;
+                position: sticky;
+                top: 0;
+                z-index: 2;
+                border-bottom: 2px solid #FFD700;
+            }
+
+            .shop-title {
+                color: #FFD700;
+                font-family: 'Amiri',serif;
+                font-size: 24px;
+                margin-bottom: 5px
+            }
+
+            .shop-coins-display {
+                color: #FFD700;
+                font-size: 20px;
+                font-weight: 700
+            }
+
+            .shop-items {
+                padding: 16px
+            }
+
+            .shop-item {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                padding: 14px;
+                margin-bottom: 13px;
+                background: rgba(255,255,255,0.035);
+                border: 1.5px solid rgba(180,0,0,0.28);
+                border-radius: 2px;
+            }
+
+            .shop-item-icon {
+                font-size: 38px;
+                flex-shrink: 0
+            }
+
+            .shop-item-info {
+                flex: 1
+            }
+
+            .shop-item-name {
+                color: #FFD700;
+                font-size: 17px;
+                font-weight: 700;
+                margin-bottom: 3px
+            }
+
+            .shop-item-desc {
+                color: #a08060;
+                font-size: 13px
+            }
+
+            .shop-item-price {
+                color: #FFD700;
+                font-size: 15px;
+                margin-top: 4px;
+                font-weight: 700
+            }
+
+            .shop-buy-btn {
+                padding: 9px 18px;
+                background: linear-gradient(135deg,#6b0000,#9b1500);
+                border: 2px solid #cc9900;
+                color: #FFD700;
+                font-family: 'Cairo',sans-serif;
+                font-size: 14px;
+                font-weight: 700;
+                cursor: pointer;
+                flex-shrink: 0;
+                clip-path: polygon(6px 0%,calc(100% - 6px) 0%,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0% calc(100% - 6px),0% 6px);
+                transition: all .18s;
+            }
+
+            .shop-buy-btn:hover {
+                background: linear-gradient(135deg,#9b1500,#cc2200);
+                transform: scale(1.06)
+            }
+
+            .shop-buy-btn:disabled {
+                opacity: .38;
+                cursor: not-allowed;
+                transform: none
+            }
+
+            .shop-close-btn {
+                width: calc(100% - 32px);
+                margin: 6px 16px 16px;
+                padding: 13px;
+                background: rgba(80,0,0,0.4);
+                border: 2px solid #7a0000;
+                color: #ddc898;
+                font-family: 'Cairo',sans-serif;
+                font-size: 17px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all .2s;
+            }
+
+            .shop-close-btn:hover {
+                background: rgba(120,0,0,0.5)
+            }
+
+            /* How To Play */
+            #howto-overlay {
+                position: fixed;
+                inset: 0;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                background: rgba(0,0,0,0.92);
+                z-index: 400;
+                backdrop-filter: blur(4px);
+            }
+
+            #howto-overlay.active {
+                display: flex
+            }
+
+            .howto-box {
+                width: min(510px,95vw);
+                max-height: 90vh;
+                overflow-y: auto;
+                background: linear-gradient(160deg,#0c0000,#160404,#080000);
+                border: 3px solid #7a0000;
+                border-top: 3px solid #FFD700;
+                border-radius: 2px;
+                padding: 0 0 20px;
+                box-shadow: 0 0 70px rgba(180,0,0,0.3);
+            }
+
+            .howto-header {
+                background: linear-gradient(135deg,#4a0000,#6b0000);
+                padding: 18px 20px;
+                text-align: center;
+                border-bottom: 2px solid #FFD700;
+                position: sticky;
+                top: 0;
+                z-index: 2;
+            }
+
+            .howto-title {
+                color: #FFD700;
+                font-family: 'Amiri',serif;
+                font-size: 24px
+            }
+
+            .howto-body {
+                padding: 22px
+            }
+
+            .howto-section {
+                margin-bottom: 22px
+            }
+
+            .howto-section-title {
+                color: #FFD700;
+                font-size: 15px;
+                font-weight: 700;
+                margin-bottom: 12px;
+                padding-bottom: 5px;
+                border-bottom: 1px solid rgba(180,0,0,0.35);
+            }
+
+            .howto-row {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                margin-bottom: 11px;
+                color: #ddc898;
+                font-size: 14px;
+            }
+
+            .howto-key {
+                background: rgba(180,0,0,0.28);
+                border: 1.5px solid #7a0000;
+                color: #FFD700;
+                padding: 4px 11px;
+                border-radius: 2px;
+                font-size: 13px;
+                font-weight: 700;
+                white-space: nowrap;
+                flex-shrink: 0;
+                font-family: monospace;
+            }
+
+            .howto-icon {
+                font-size: 22px;
+                flex-shrink: 0;
+                width: 32px;
+                text-align: center
+            }
+
+            .howto-close-btn {
+                width: calc(100% - 32px);
+                margin: 8px 16px 0;
+                padding: 13px;
+                background: rgba(80,0,0,0.4);
+                border: 2px solid #7a0000;
+                color: #ddc898;
+                font-family: 'Cairo',sans-serif;
+                font-size: 17px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all .2s;
+            }
+
+            .howto-close-btn:hover {
+                background: rgba(120,0,0,0.5)
+            }
+
+            /* Mobile Controls */
+            #mobile-controls {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                display: none;
+                align-items: flex-end;
+                justify-content: space-between;
+                padding: 0 14px 18px;
+                z-index: 50;
+                pointer-events: none;
+                background: url('https://raw.githubusercontent.com/GhesHuba/-/main/q.png') bottom center/contain no-repeat;
+                min-height: 160px;
+            }
+
+            #mobile-controls.active {
+                display: flex
+            }
+
+            .ctrl-group {
+                display: flex;
+                gap: 10px;
+                pointer-events: all
+            }
+
+            .ctrl-btn {
+                width: 56px;
+                height: 56px;
+                background: transparent;
+                border: none;
+                color: transparent;
+                font-size: 0;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
+                transition: all .1s;
+                user-select: none;
+                touch-action: manipulation;
+            }
+
+            .ctrl-btn:active,.ctrl-btn.pressed {
+                background: rgba(255,255,255,0.2);
+                transform: scale(0.88) translateY(2px);
+            }
+
+            #ctrl-jump {
+                width: 62px;
+                height: 62px;
+            }
+
+            #ctrl-jump:active,#ctrl-jump.pressed {
+                background: rgba(255,255,255,0.2);
+                transform: scale(0.88);
+            }
+
+            #ctrl-attack {
+                width: 60px;
+                height: 60px;
+            }
+
+            #ctrl-attack:active,#ctrl-attack.pressed {
+                background: rgba(255,255,255,0.2);
+                transform: scale(0.88);
+            }
+        </style>
+        <script type="module">
+            "use strict";
+            ( () => {
+                var O = "0.5.1";
+                var v = {
+                    HIGHLIGHT_COLOR: "#0079F2",
+                    HIGHLIGHT_BG: "#0079F210",
+                    ALLOWED_PARENT_DOMAINS: [".replit.dev", ".replit.com", ".replit-staging.com", ".repl.co"],
+                    THEME_PREVIEW_STYLE_ID: "replit-theme-preview",
+                    MAX_SIBLING_HIGHLIGHTERS: 1e3,
+                    MAX_DESCENDANTS_FOR_SCREENSHOT: 1500
+                }
+                  , ie = `
+  [contenteditable] {
+    outline: none !important;
+  }
+
+  [contenteditable]:focus {
+    outline: none !important;
+  }
+`
+                  , ne = `
+  .beacon-highlighter {
+    content: '';
+    position: absolute;
+    z-index: ${Number.MAX_SAFE_INTEGER - 3};
+    box-sizing: border-box;
+    pointer-events: none;
+    outline: 2px dashed ${v.HIGHLIGHT_COLOR} !important;
+    outline-offset: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+    background: ${v.HIGHLIGHT_BG} !important;
+    opacity: 0;
+  }
+  
+  .beacon-hover-highlighter {
+    position: fixed;
+    z-index: ${Number.MAX_SAFE_INTEGER};
+  }
+  
+  .beacon-selected-highlighter {
+    position: fixed;
+    pointer-events: none;
+    outline: 2px solid ${v.HIGHLIGHT_COLOR} !important;
+    outline-offset: 3px !important;
+    background: none !important;
+  }
+  
+  .beacon-label {
+    position: absolute;
+    background-color: ${v.HIGHLIGHT_COLOR};
+    color: #FFFFFF;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: monospace;
+    line-height: 1;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transform: translateY(-100%);
+    margin-top: -4px;
+    left: 0;
+    z-index: ${Number.MAX_SAFE_INTEGER - 2};
+    pointer-events: none;
+    opacity: 0;
+  }
+  
+  .beacon-hover-label {
+    position: fixed;
+    z-index: ${Number.MAX_SAFE_INTEGER};
+  }
+  
+  .beacon-selected-label {
+    position: fixed;
+    pointer-events: none;
+  }
+  
+  .beacon-sibling-highlighter {
+    position: fixed;
+    pointer-events: none;
+    outline: 2px dashed ${v.HIGHLIGHT_COLOR} !important;
+    outline-offset: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+    background: ${v.HIGHLIGHT_BG} !important;
+  }
+`;
+                function Fe(e, i) {
+                    return e[13] = 1,
+                    e[14] = i >> 8,
+                    e[15] = i & 255,
+                    e[16] = i >> 8,
+                    e[17] = i & 255,
+                    e
+                }
+                var he = 112, de = 72, ue = 89, ge = 115, G;
+                function Ue() {
+                    let e = new Int32Array(256);
+                    for (let i = 0; i < 256; i++) {
+                        let t = i;
+                        for (let n = 0; n < 8; n++)
+                            t = t & 1 ? 3988292384 ^ t >>> 1 : t >>> 1;
+                        e[i] = t
+                    }
+                    return e
+                }
+                function $e(e) {
+                    let i = -1;
+                    G || (G = Ue());
+                    for (let t = 0; t < e.length; t++)
+                        i = G[(i ^ e[t]) & 255] ^ i >>> 8;
+                    return i ^ -1
+                }
+                function We(e) {
+                    let i = e.length - 1;
+                    for (let t = i; t >= 4; t--)
+                        if (e[t - 4] === 9 && e[t - 3] === he && e[t - 2] === de && e[t - 1] === ue && e[t] === ge)
+                            return t - 3;
+                    return 0
+                }
+                function Ge(e, i, t=!1) {
+                    let n = new Uint8Array(13);
+                    i *= 39.3701,
+                    n[0] = he,
+                    n[1] = de,
+                    n[2] = ue,
+                    n[3] = ge,
+                    n[4] = i >>> 24,
+                    n[5] = i >>> 16,
+                    n[6] = i >>> 8,
+                    n[7] = i & 255,
+                    n[8] = n[4],
+                    n[9] = n[5],
+                    n[10] = n[6],
+                    n[11] = n[7],
+                    n[12] = 1;
+                    let r = $e(n)
+                      , o = new Uint8Array(4);
+                    if (o[0] = r >>> 24,
+                    o[1] = r >>> 16,
+                    o[2] = r >>> 8,
+                    o[3] = r & 255,
+                    t) {
+                        let l = We(e);
+                        return e.set(n, l),
+                        e.set(o, l + 13),
+                        e
+                    } else {
+                        let l = new Uint8Array(4);
+                        l[0] = 0,
+                        l[1] = 0,
+                        l[2] = 0,
+                        l[3] = 9;
+                        let s = new Uint8Array(54);
+                        return s.set(e, 0),
+                        s.set(l, 33),
+                        s.set(n, 37),
+                        s.set(o, 50),
+                        s
+                    }
+                }
+                var me = "[modern-screenshot]"
+                  , C = typeof window < "u"
+                  , Ve = C && "Worker"in window
+                  , je = C && "atob"in window
+                  , ii = C && "btoa"in window
+                  , j = C ? window.navigator?.userAgent : ""
+                  , fe = j.includes("Chrome")
+                  , B = j.includes("AppleWebKit") && !fe
+                  , z = j.includes("Firefox")
+                  , ze = e => e && "__CONTEXT__"in e
+                  , qe = e => e.constructor.name === "CSSFontFaceRule"
+                  , Xe = e => e.constructor.name === "CSSImportRule"
+                  , S = e => e.nodeType === 1
+                  , _ = e => typeof e.className == "object"
+                  , pe = e => e.tagName === "image"
+                  , Ye = e => e.tagName === "use"
+                  , R = e => S(e) && typeof e.style < "u" && !_(e)
+                  , Ke = e => e.nodeType === 8
+                  , Je = e => e.nodeType === 3
+                  , L = e => e.tagName === "IMG"
+                  , k = e => e.tagName === "VIDEO"
+                  , Qe = e => e.tagName === "CANVAS"
+                  , Ze = e => e.tagName === "TEXTAREA"
+                  , et = e => e.tagName === "INPUT"
+                  , tt = e => e.tagName === "STYLE"
+                  , it = e => e.tagName === "SCRIPT"
+                  , nt = e => e.tagName === "SELECT"
+                  , rt = e => e.tagName === "SLOT"
+                  , ot = e => e.tagName === "IFRAME"
+                  , st = (...e) => console.warn(me, ...e);
+                function lt(e) {
+                    let i = e?.createElement?.("canvas");
+                    return i && (i.height = i.width = 1),
+                    !!i && "toDataURL"in i && !!i.toDataURL("image/webp").includes("image/webp")
+                }
+                var V = e => e.startsWith("data:");
+                function be(e, i) {
+                    if (e.match(/^[a-z]+:\/\//i))
+                        return e;
+                    if (C && e.match(/^\/\//))
+                        return window.location.protocol + e;
+                    if (e.match(/^[a-z]+:/i) || !C)
+                        return e;
+                    let t = F().implementation.createHTMLDocument()
+                      , n = t.createElement("base")
+                      , r = t.createElement("a");
+                    return t.head.appendChild(n),
+                    t.body.appendChild(r),
+                    i && (n.href = i),
+                    r.href = e,
+                    r.href
+                }
+                function F(e) {
+                    return (e && S(e) ? e?.ownerDocument : e) ?? window.document
+                }
+                var U = "http://www.w3.org/2000/svg";
+                function at(e, i, t) {
+                    let n = F(t).createElementNS(U, "svg");
+                    return n.setAttributeNS(null, "width", e.toString()),
+                    n.setAttributeNS(null, "height", i.toString()),
+                    n.setAttributeNS(null, "viewBox", `0 0 ${e} ${i}`),
+                    n
+                }
+                function ct(e, i) {
+                    let t = new XMLSerializer().serializeToString(e);
+                    return i && (t = t.replace(/[\u0000-\u0008\v\f\u000E-\u001F\uD800-\uDFFF\uFFFE\uFFFF]/gu, "")),
+                    `data:image/svg+xml;charset=utf-8,${encodeURIComponent(t)}`
+                }
+                async function ht(e, i="image/png", t=1) {
+                    try {
+                        return await new Promise( (n, r) => {
+                            e.toBlob(o => {
+                                o ? n(o) : r(new Error("Blob is null"))
+                            }
+                            , i, t)
+                        }
+                        )
+                    } catch (n) {
+                        if (je)
+                            return dt(e.toDataURL(i, t));
+                        throw n
+                    }
+                }
+                function dt(e) {
+                    let[i,t] = e.split(",")
+                      , n = i.match(/data:(.+);/)?.[1] ?? void 0
+                      , r = window.atob(t)
+                      , o = r.length
+                      , l = new Uint8Array(o);
+                    for (let s = 0; s < o; s += 1)
+                        l[s] = r.charCodeAt(s);
+                    return new Blob([l],{
+                        type: n
+                    })
+                }
+                function Ee(e, i) {
+                    return new Promise( (t, n) => {
+                        let r = new FileReader;
+                        r.onload = () => t(r.result),
+                        r.onerror = () => n(r.error),
+                        r.onabort = () => n(new Error(`Failed read blob to ${i}`)),
+                        i === "dataUrl" ? r.readAsDataURL(e) : i === "arrayBuffer" && r.readAsArrayBuffer(e)
+                    }
+                    )
+                }
+                var ut = e => Ee(e, "dataUrl")
+                  , gt = e => Ee(e, "arrayBuffer");
+                function H(e, i) {
+                    let t = F(i).createElement("img");
+                    return t.decoding = "sync",
+                    t.loading = "eager",
+                    t.src = e,
+                    t
+                }
+                function x(e, i) {
+                    return new Promise(t => {
+                        let {timeout: n, ownerDocument: r, onError: o, onWarn: l} = i ?? {}
+                          , s = typeof e == "string" ? H(e, F(r)) : e
+                          , c = null
+                          , h = null;
+                        function a() {
+                            t(s),
+                            c && clearTimeout(c),
+                            h?.()
+                        }
+                        if (n && (c = setTimeout(a, n)),
+                        k(s)) {
+                            let d = s.currentSrc || s.src;
+                            if (!d)
+                                return s.poster ? x(s.poster, i).then(t) : a();
+                            if (s.readyState >= 2)
+                                return a();
+                            let u = a
+                              , m = g => {
+                                l?.("Failed video load", d, g),
+                                o?.(g),
+                                a()
+                            }
+                            ;
+                            h = () => {
+                                s.removeEventListener("loadeddata", u),
+                                s.removeEventListener("error", m)
+                            }
+                            ,
+                            s.addEventListener("loadeddata", u, {
+                                once: !0
+                            }),
+                            s.addEventListener("error", m, {
+                                once: !0
+                            })
+                        } else {
+                            let d = pe(s) ? s.href.baseVal : s.currentSrc || s.src;
+                            if (!d)
+                                return a();
+                            let u = async () => {
+                                if (L(s) && "decode"in s)
+                                    try {
+                                        await s.decode()
+                                    } catch (g) {
+                                        l?.("Failed to decode image, trying to render anyway", s.dataset.originalSrc || d, g)
+                                    }
+                                a()
+                            }
+                              , m = g => {
+                                l?.("Failed image load", s.dataset.originalSrc || d, g),
+                                a()
+                            }
+                            ;
+                            if (L(s) && s.complete)
+                                return u();
+                            h = () => {
+                                s.removeEventListener("load", u),
+                                s.removeEventListener("error", m)
+                            }
+                            ,
+                            s.addEventListener("load", u, {
+                                once: !0
+                            }),
+                            s.addEventListener("error", m, {
+                                once: !0
+                            })
+                        }
+                    }
+                    )
+                }
+                async function mt(e, i) {
+                    R(e) && (L(e) || k(e) ? await x(e, i) : await Promise.all(["img", "video"].flatMap(t => Array.from(e.querySelectorAll(t)).map(n => x(n, i)))))
+                }
+                var ve = function() {
+                    let i = 0
+                      , t = () => `0000${(Math.random() * 36 ** 4 << 0).toString(36)}`.slice(-4);
+                    return () => (i += 1,
+                    `u${t()}${i}`)
+                }();
+                function we(e) {
+                    return e?.split(",").map(i => i.trim().replace(/"|'/g, "").toLowerCase()).filter(Boolean)
+                }
+                var re = 0;
+                function ft(e) {
+                    let i = `${me}[#${re}]`;
+                    return re++,
+                    {
+                        time: t => e && console.time(`${i} ${t}`),
+                        timeEnd: t => e && console.timeEnd(`${i} ${t}`),
+                        warn: (...t) => e && st(...t)
+                    }
+                }
+                function pt(e) {
+                    return {
+                        cache: e ? "no-cache" : "force-cache"
+                    }
+                }
+                async function q(e, i) {
+                    return ze(e) ? e : bt(e, {
+                        ...i,
+                        autoDestruct: !0
+                    })
+                }
+                async function bt(e, i) {
+                    let {scale: t=1, workerUrl: n, workerNumber: r=1} = i || {}
+                      , o = !!i?.debug
+                      , l = i?.features ?? !0
+                      , s = e.ownerDocument ?? (C ? window.document : void 0)
+                      , c = e.ownerDocument?.defaultView ?? (C ? window : void 0)
+                      , h = new Map
+                      , a = {
+                        width: 0,
+                        height: 0,
+                        quality: 1,
+                        type: "image/png",
+                        scale: t,
+                        backgroundColor: null,
+                        style: null,
+                        filter: null,
+                        maximumCanvasSize: 0,
+                        timeout: 3e4,
+                        progress: null,
+                        debug: o,
+                        fetch: {
+                            requestInit: pt(i?.fetch?.bypassingCache),
+                            placeholderImage: "data:image/png;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+                            bypassingCache: !1,
+                            ...i?.fetch
+                        },
+                        fetchFn: null,
+                        font: {},
+                        drawImageInterval: 100,
+                        workerUrl: null,
+                        workerNumber: r,
+                        onCloneNode: null,
+                        onEmbedNode: null,
+                        onCreateForeignObjectSvg: null,
+                        includeStyleProperties: null,
+                        autoDestruct: !1,
+                        ...i,
+                        __CONTEXT__: !0,
+                        log: ft(o),
+                        node: e,
+                        ownerDocument: s,
+                        ownerWindow: c,
+                        dpi: t === 1 ? null : 96 * t,
+                        svgStyleElement: ye(s),
+                        svgDefsElement: s?.createElementNS(U, "defs"),
+                        svgStyles: new Map,
+                        defaultComputedStyles: new Map,
+                        workers: [...Array.from({
+                            length: Ve && n && r ? r : 0
+                        })].map( () => {
+                            try {
+                                let m = new Worker(n);
+                                return m.onmessage = async g => {
+                                    let {url: f, result: p} = g.data;
+                                    p ? h.get(f)?.resolve?.(p) : h.get(f)?.reject?.(new Error(`Error receiving message from worker: ${f}`))
+                                }
+                                ,
+                                m.onmessageerror = g => {
+                                    let {url: f} = g.data;
+                                    h.get(f)?.reject?.(new Error(`Error receiving message from worker: ${f}`))
+                                }
+                                ,
+                                m
+                            } catch (m) {
+                                return a.log.warn("Failed to new Worker", m),
+                                null
+                            }
+                        }
+                        ).filter(Boolean),
+                        fontFamilies: new Map,
+                        fontCssTexts: new Map,
+                        acceptOfImage: `${[lt(s) && "image/webp", "image/svg+xml", "image/*", "*/*"].filter(Boolean).join(",")};q=0.8`,
+                        requests: h,
+                        drawImageCount: 0,
+                        tasks: [],
+                        features: l,
+                        isEnable: m => m === "restoreScrollPosition" ? typeof l == "boolean" ? !1 : l[m] ?? !1 : typeof l == "boolean" ? l : l[m] ?? !0
+                    };
+                    a.log.time("wait until load"),
+                    await mt(e, {
+                        timeout: a.timeout,
+                        onWarn: a.log.warn
+                    }),
+                    a.log.timeEnd("wait until load");
+                    let {width: d, height: u} = Et(e, a);
+                    return a.width = d,
+                    a.height = u,
+                    a
+                }
+                function ye(e) {
+                    if (!e)
+                        return;
+                    let i = e.createElement("style")
+                      , t = i.ownerDocument.createTextNode(`
+.______background-clip--text {
+  background-clip: text;
+  -webkit-background-clip: text;
 }
-#mobile-controls.active{display:flex}
-.ctrl-group{display:flex;gap:10px;pointer-events:all}
-.ctrl-btn{
-  width:56px;height:56px;
-  background:radial-gradient(circle at 35% 35%,rgba(130,0,0,0.75),rgba(50,0,0,0.95));
-  border:2px solid rgba(180,0,0,0.55);border-bottom:3px solid rgba(80,0,0,0.9);
-  color:#FFD700;font-size:20px;font-weight:900;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;-webkit-tap-highlight-color:transparent;
-  box-shadow:0 5px 14px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,80,0,0.25);
-  transition:all .1s;user-select:none;touch-action:manipulation;
+`);
+                    return i.appendChild(t),
+                    i
+                }
+                function Et(e, i) {
+                    let {width: t, height: n} = i;
+                    if (S(e) && (!t || !n)) {
+                        let r = e.getBoundingClientRect();
+                        t = t || r.width || Number(e.getAttribute("width")) || 0,
+                        n = n || r.height || Number(e.getAttribute("height")) || 0
+                    }
+                    return {
+                        width: t,
+                        height: n
+                    }
+                }
+                async function vt(e, i) {
+                    let {log: t, timeout: n, drawImageCount: r, drawImageInterval: o} = i;
+                    t.time("image to canvas");
+                    let l = await x(e, {
+                        timeout: n,
+                        onWarn: i.log.warn
+                    })
+                      , {canvas: s, context2d: c} = wt(e.ownerDocument, i)
+                      , h = () => {
+                        try {
+                            c?.drawImage(l, 0, 0, s.width, s.height)
+                        } catch (a) {
+                            i.log.warn("Failed to drawImage", a)
+                        }
+                    }
+                    ;
+                    if (h(),
+                    i.isEnable("fixSvgXmlDecode"))
+                        for (let a = 0; a < r; a++)
+                            await new Promise(d => {
+                                setTimeout( () => {
+                                    h(),
+                                    d()
+                                }
+                                , a + o)
+                            }
+                            );
+                    return i.drawImageCount = 0,
+                    t.timeEnd("image to canvas"),
+                    s
+                }
+                function wt(e, i) {
+                    let {width: t, height: n, scale: r, backgroundColor: o, maximumCanvasSize: l} = i
+                      , s = e.createElement("canvas");
+                    s.width = Math.floor(t * r),
+                    s.height = Math.floor(n * r),
+                    s.style.width = `${t}px`,
+                    s.style.height = `${n}px`,
+                    l && (s.width > l || s.height > l) && (s.width > l && s.height > l ? s.width > s.height ? (s.height *= l / s.width,
+                    s.width = l) : (s.width *= l / s.height,
+                    s.height = l) : s.width > l ? (s.height *= l / s.width,
+                    s.width = l) : (s.width *= l / s.height,
+                    s.height = l));
+                    let c = s.getContext("2d");
+                    return c && o && (c.fillStyle = o,
+                    c.fillRect(0, 0, s.width, s.height)),
+                    {
+                        canvas: s,
+                        context2d: c
+                    }
+                }
+                function Se(e, i) {
+                    if (e.ownerDocument)
+                        try {
+                            let o = e.toDataURL();
+                            if (o !== "data:,")
+                                return H(o, e.ownerDocument)
+                        } catch (o) {
+                            i.log.warn("Failed to clone canvas", o)
+                        }
+                    let t = e.cloneNode(!1)
+                      , n = e.getContext("2d")
+                      , r = t.getContext("2d");
+                    try {
+                        return n && r && r.putImageData(n.getImageData(0, 0, e.width, e.height), 0, 0),
+                        t
+                    } catch (o) {
+                        i.log.warn("Failed to clone canvas", o)
+                    }
+                    return t
+                }
+                function yt(e, i) {
+                    try {
+                        if (e?.contentDocument?.body)
+                            return X(e.contentDocument.body, i)
+                    } catch (t) {
+                        i.log.warn("Failed to clone iframe", t)
+                    }
+                    return e.cloneNode(!1)
+                }
+                function St(e) {
+                    let i = e.cloneNode(!1);
+                    return e.currentSrc && e.currentSrc !== e.src && (i.src = e.currentSrc,
+                    i.srcset = ""),
+                    i.loading === "lazy" && (i.loading = "eager"),
+                    i
+                }
+                async function Tt(e, i) {
+                    if (e.ownerDocument && !e.currentSrc && e.poster)
+                        return H(e.poster, e.ownerDocument);
+                    let t = e.cloneNode(!1);
+                    t.crossOrigin = "anonymous",
+                    e.currentSrc && e.currentSrc !== e.src && (t.src = e.currentSrc);
+                    let n = t.ownerDocument;
+                    if (n) {
+                        let r = !0;
+                        if (await x(t, {
+                            onError: () => r = !1,
+                            onWarn: i.log.warn
+                        }),
+                        !r)
+                            return e.poster ? H(e.poster, e.ownerDocument) : t;
+                        t.currentTime = e.currentTime,
+                        await new Promise(l => {
+                            t.addEventListener("seeked", l, {
+                                once: !0
+                            })
+                        }
+                        );
+                        let o = n.createElement("canvas");
+                        o.width = e.offsetWidth,
+                        o.height = e.offsetHeight;
+                        try {
+                            let l = o.getContext("2d");
+                            l && l.drawImage(t, 0, 0, o.width, o.height)
+                        } catch (l) {
+                            return i.log.warn("Failed to clone video", l),
+                            e.poster ? H(e.poster, e.ownerDocument) : t
+                        }
+                        return Se(o, i)
+                    }
+                    return t
+                }
+                function At(e, i) {
+                    return Qe(e) ? Se(e, i) : ot(e) ? yt(e, i) : L(e) ? St(e) : k(e) ? Tt(e, i) : e.cloneNode(!1)
+                }
+                function Ct(e) {
+                    let i = e.sandbox;
+                    if (!i) {
+                        let {ownerDocument: t} = e;
+                        try {
+                            t && (i = t.createElement("iframe"),
+                            i.id = `__SANDBOX__-${ve()}`,
+                            i.width = "0",
+                            i.height = "0",
+                            i.style.visibility = "hidden",
+                            i.style.position = "fixed",
+                            t.body.appendChild(i),
+                            i.contentWindow?.document.write('<!DOCTYPE html><meta charset="UTF-8"><title></title><body>'),
+                            e.sandbox = i)
+                        } catch (n) {
+                            e.log.warn("Failed to getSandBox", n)
+                        }
+                    }
+                    return i
+                }
+                var Ht = ["width", "height", "-webkit-text-fill-color"]
+                  , Lt = ["stroke", "fill"];
+                function Te(e, i, t) {
+                    let {defaultComputedStyles: n} = t
+                      , r = e.nodeName.toLowerCase()
+                      , o = _(e) && r !== "svg"
+                      , l = o ? Lt.map(f => [f, e.getAttribute(f)]).filter( ([,f]) => f !== null) : []
+                      , s = [o && "svg", r, l.map( (f, p) => `${f}=${p}`).join(","), i].filter(Boolean).join(":");
+                    if (n.has(s))
+                        return n.get(s);
+                    let h = Ct(t)?.contentWindow;
+                    if (!h)
+                        return new Map;
+                    let a = h?.document, d, u;
+                    o ? (d = a.createElementNS(U, "svg"),
+                    u = d.ownerDocument.createElementNS(d.namespaceURI, r),
+                    l.forEach( ([f,p]) => {
+                        u.setAttributeNS(null, f, p)
+                    }
+                    ),
+                    d.appendChild(u)) : d = u = a.createElement(r),
+                    u.textContent = " ",
+                    a.body.appendChild(d);
+                    let m = h.getComputedStyle(u, i)
+                      , g = new Map;
+                    for (let f = m.length, p = 0; p < f; p++) {
+                        let b = m.item(p);
+                        Ht.includes(b) || g.set(b, m.getPropertyValue(b))
+                    }
+                    return a.body.removeChild(d),
+                    n.set(s, g),
+                    g
+                }
+                function Ae(e, i, t) {
+                    let n = new Map
+                      , r = []
+                      , o = new Map;
+                    if (t)
+                        for (let s of t)
+                            l(s);
+                    else
+                        for (let s = e.length, c = 0; c < s; c++) {
+                            let h = e.item(c);
+                            l(h)
+                        }
+                    for (let s = r.length, c = 0; c < s; c++)
+                        o.get(r[c])?.forEach( (h, a) => n.set(a, h));
+                    function l(s) {
+                        let c = e.getPropertyValue(s)
+                          , h = e.getPropertyPriority(s)
+                          , a = s.lastIndexOf("-")
+                          , d = a > -1 ? s.substring(0, a) : void 0;
+                        if (d) {
+                            let u = o.get(d);
+                            u || (u = new Map,
+                            o.set(d, u)),
+                            u.set(s, [c, h])
+                        }
+                        i.get(s) === c && !h || (d ? r.push(d) : n.set(s, [c, h]))
+                    }
+                    return n
+                }
+                function Rt(e, i, t, n) {
+                    let {ownerWindow: r, includeStyleProperties: o, currentParentNodeStyle: l} = n
+                      , s = i.style
+                      , c = r.getComputedStyle(e)
+                      , h = Te(e, null, n);
+                    l?.forEach( (d, u) => {
+                        h.delete(u)
+                    }
+                    );
+                    let a = Ae(c, h, o);
+                    a.delete("transition-property"),
+                    a.delete("all"),
+                    a.delete("d"),
+                    a.delete("content"),
+                    t && (a.delete("margin-top"),
+                    a.delete("margin-right"),
+                    a.delete("margin-bottom"),
+                    a.delete("margin-left"),
+                    a.delete("margin-block-start"),
+                    a.delete("margin-block-end"),
+                    a.delete("margin-inline-start"),
+                    a.delete("margin-inline-end"),
+                    a.set("box-sizing", ["border-box", ""])),
+                    a.get("background-clip")?.[0] === "text" && i.classList.add("______background-clip--text"),
+                    fe && (a.has("font-kerning") || a.set("font-kerning", ["normal", ""]),
+                    (a.get("overflow-x")?.[0] === "hidden" || a.get("overflow-y")?.[0] === "hidden") && a.get("text-overflow")?.[0] === "ellipsis" && e.scrollWidth === e.clientWidth && a.set("text-overflow", ["clip", ""]));
+                    for (let d = s.length, u = 0; u < d; u++)
+                        s.removeProperty(s.item(u));
+                    return a.forEach( ([d,u], m) => {
+                        s.setProperty(m, d, u)
+                    }
+                    ),
+                    a
+                }
+                function xt(e, i) {
+                    (Ze(e) || et(e) || nt(e)) && i.setAttribute("value", e.value)
+                }
+                var Nt = [":before", ":after"]
+                  , _t = [":-webkit-scrollbar", ":-webkit-scrollbar-button", ":-webkit-scrollbar-thumb", ":-webkit-scrollbar-track", ":-webkit-scrollbar-track-piece", ":-webkit-scrollbar-corner", ":-webkit-resizer"];
+                function It(e, i, t, n, r) {
+                    let {ownerWindow: o, svgStyleElement: l, svgStyles: s, currentNodeStyle: c} = n;
+                    if (!l || !o)
+                        return;
+                    function h(a) {
+                        let d = o.getComputedStyle(e, a)
+                          , u = d.getPropertyValue("content");
+                        if (!u || u === "none")
+                            return;
+                        r?.(u),
+                        u = u.replace(/(')|(")|(counter\(.+\))/g, "");
+                        let m = [ve()]
+                          , g = Te(e, a, n);
+                        c?.forEach( (E, y) => {
+                            g.delete(y)
+                        }
+                        );
+                        let f = Ae(d, g, n.includeStyleProperties);
+                        f.delete("content"),
+                        f.delete("-webkit-locale"),
+                        f.get("background-clip")?.[0] === "text" && i.classList.add("______background-clip--text");
+                        let p = [`content: '${u}';`];
+                        if (f.forEach( ([E,y], A) => {
+                            p.push(`${A}: ${E}${y ? " !important" : ""};`)
+                        }
+                        ),
+                        p.length === 1)
+                            return;
+                        try {
+                            i.className = [i.className, ...m].join(" ")
+                        } catch (E) {
+                            n.log.warn("Failed to copyPseudoClass", E);
+                            return
+                        }
+                        let b = p.join(`
+  `)
+                          , w = s.get(b);
+                        w || (w = [],
+                        s.set(b, w)),
+                        w.push(`.${m[0]}:${a}`)
+                    }
+                    Nt.forEach(h),
+                    t && _t.forEach(h)
+                }
+                var oe = new Set(["symbol"]);
+                async function se(e, i, t, n, r) {
+                    if (S(t) && (tt(t) || it(t)) || n.filter && !n.filter(t))
+                        return;
+                    oe.has(i.nodeName) || oe.has(t.nodeName) ? n.currentParentNodeStyle = void 0 : n.currentParentNodeStyle = n.currentNodeStyle;
+                    let o = await X(t, n, !1, r);
+                    n.isEnable("restoreScrollPosition") && Mt(e, o),
+                    i.appendChild(o)
+                }
+                async function le(e, i, t, n) {
+                    let r = (S(e) ? e.shadowRoot?.firstChild : void 0) ?? e.firstChild;
+                    for (let o = r; o; o = o.nextSibling)
+                        if (!Ke(o))
+                            if (S(o) && rt(o) && typeof o.assignedNodes == "function") {
+                                let l = o.assignedNodes();
+                                for (let s = 0; s < l.length; s++)
+                                    await se(e, i, l[s], t, n)
+                            } else
+                                await se(e, i, o, t, n)
+                }
+                function Mt(e, i) {
+                    if (!R(e) || !R(i))
+                        return;
+                    let {scrollTop: t, scrollLeft: n} = e;
+                    if (!t && !n)
+                        return;
+                    let {transform: r} = i.style
+                      , o = new DOMMatrix(r)
+                      , {a: l, b: s, c, d: h} = o;
+                    o.a = 1,
+                    o.b = 0,
+                    o.c = 0,
+                    o.d = 1,
+                    o.translateSelf(-n, -t),
+                    o.a = l,
+                    o.b = s,
+                    o.c = c,
+                    o.d = h,
+                    i.style.transform = o.toString()
+                }
+                function Dt(e, i) {
+                    let {backgroundColor: t, width: n, height: r, style: o} = i
+                      , l = e.style;
+                    if (t && l.setProperty("background-color", t, "important"),
+                    n && l.setProperty("width", `${n}px`, "important"),
+                    r && l.setProperty("height", `${r}px`, "important"),
+                    o)
+                        for (let s in o)
+                            l[s] = o[s]
+                }
+                var Pt = /^[\w-:]+$/;
+                async function X(e, i, t=!1, n) {
+                    let {ownerDocument: r, ownerWindow: o, fontFamilies: l} = i;
+                    if (r && Je(e))
+                        return n && /\S/.test(e.data) && n(e.data),
+                        r.createTextNode(e.data);
+                    if (r && o && S(e) && (R(e) || _(e))) {
+                        let c = await At(e, i);
+                        if (i.isEnable("removeAbnormalAttributes")) {
+                            let g = c.getAttributeNames();
+                            for (let f = g.length, p = 0; p < f; p++) {
+                                let b = g[p];
+                                Pt.test(b) || c.removeAttribute(b)
+                            }
+                        }
+                        let h = i.currentNodeStyle = Rt(e, c, t, i);
+                        t && Dt(c, i);
+                        let a = !1;
+                        if (i.isEnable("copyScrollbar")) {
+                            let g = [h.get("overflow-x")?.[0], h.get("overflow-y")?.[0]];
+                            a = g.includes("scroll") || (g.includes("auto") || g.includes("overlay")) && (e.scrollHeight > e.clientHeight || e.scrollWidth > e.clientWidth)
+                        }
+                        let d = h.get("text-transform")?.[0]
+                          , u = we(h.get("font-family")?.[0])
+                          , m = u ? g => {
+                            d === "uppercase" ? g = g.toUpperCase() : d === "lowercase" ? g = g.toLowerCase() : d === "capitalize" && (g = g[0].toUpperCase() + g.substring(1)),
+                            u.forEach(f => {
+                                let p = l.get(f);
+                                p || l.set(f, p = new Set),
+                                g.split("").forEach(b => p.add(b))
+                            }
+                            )
+                        }
+                        : void 0;
+                        return It(e, c, a, i, m),
+                        xt(e, c),
+                        k(e) || await le(e, c, i, m),
+                        c
+                    }
+                    let s = e.cloneNode(!1);
+                    return await le(e, s, i),
+                    s
+                }
+                function Ot(e) {
+                    if (e.ownerDocument = void 0,
+                    e.ownerWindow = void 0,
+                    e.svgStyleElement = void 0,
+                    e.svgDefsElement = void 0,
+                    e.svgStyles.clear(),
+                    e.defaultComputedStyles.clear(),
+                    e.sandbox) {
+                        try {
+                            e.sandbox.remove()
+                        } catch (i) {
+                            e.log.warn("Failed to destroyContext", i)
+                        }
+                        e.sandbox = void 0
+                    }
+                    e.workers = [],
+                    e.fontFamilies.clear(),
+                    e.fontCssTexts.clear(),
+                    e.requests.clear(),
+                    e.tasks = []
+                }
+                function Bt(e) {
+                    let {url: i, timeout: t, responseType: n, ...r} = e
+                      , o = new AbortController
+                      , l = t ? setTimeout( () => o.abort(), t) : void 0;
+                    return fetch(i, {
+                        signal: o.signal,
+                        ...r
+                    }).then(s => {
+                        if (!s.ok)
+                            throw new Error("Failed fetch, not 2xx response",{
+                                cause: s
+                            });
+                        switch (n) {
+                        case "arrayBuffer":
+                            return s.arrayBuffer();
+                        case "dataUrl":
+                            return s.blob().then(ut);
+                        case "text":
+                        default:
+                            return s.text()
+                        }
+                    }
+                    ).finally( () => clearTimeout(l))
+                }
+                function N(e, i) {
+                    let {url: t, requestType: n="text", responseType: r="text", imageDom: o} = i
+                      , l = t
+                      , {timeout: s, acceptOfImage: c, requests: h, fetchFn: a, fetch: {requestInit: d, bypassingCache: u, placeholderImage: m}, font: g, workers: f, fontFamilies: p} = e;
+                    n === "image" && (B || z) && e.drawImageCount++;
+                    let b = h.get(t);
+                    if (!b) {
+                        u && u instanceof RegExp && u.test(l) && (l += (/\?/.test(l) ? "&" : "?") + new Date().getTime());
+                        let w = n.startsWith("font") && g && g.minify
+                          , E = new Set;
+                        w && n.split(";")[1].split(",").forEach(P => {
+                            p.has(P) && p.get(P).forEach(te => E.add(te))
+                        }
+                        );
+                        let y = w && E.size
+                          , A = {
+                            url: l,
+                            timeout: s,
+                            responseType: y ? "arrayBuffer" : r,
+                            headers: n === "image" ? {
+                                accept: c
+                            } : void 0,
+                            ...d
+                        };
+                        b = {
+                            type: n,
+                            resolve: void 0,
+                            reject: void 0,
+                            response: null
+                        },
+                        b.response = (async () => {
+                            if (a && n === "image") {
+                                let T = await a(t);
+                                if (T)
+                                    return T
+                            }
+                            return !B && t.startsWith("http") && f.length ? new Promise( (T, P) => {
+                                f[h.size & f.length - 1].postMessage({
+                                    rawUrl: t,
+                                    ...A
+                                }),
+                                b.resolve = T,
+                                b.reject = P
+                            }
+                            ) : Bt(A)
+                        }
+                        )().catch(T => {
+                            if (h.delete(t),
+                            n === "image" && m)
+                                return e.log.warn("Failed to fetch image base64, trying to use placeholder image", l),
+                                typeof m == "string" ? m : m(o);
+                            throw T
+                        }
+                        ),
+                        h.set(t, b)
+                    }
+                    return b.response
+                }
+                async function Ce(e, i, t, n) {
+                    if (!He(e))
+                        return e;
+                    for (let[r,o] of kt(e, i))
+                        try {
+                            let l = await N(t, {
+                                url: o,
+                                requestType: n ? "image" : "text",
+                                responseType: "dataUrl"
+                            });
+                            e = e.replace(Ft(r), `$1${l}$3`)
+                        } catch (l) {
+                            t.log.warn("Failed to fetch css data url", r, l)
+                        }
+                    return e
+                }
+                function He(e) {
+                    return /url\((['"]?)([^'"]+?)\1\)/.test(e)
+                }
+                var Le = /url\((['"]?)([^'"]+?)\1\)/g;
+                function kt(e, i) {
+                    let t = [];
+                    return e.replace(Le, (n, r, o) => (t.push([o, be(o, i)]),
+                    n)),
+                    t.filter( ([n]) => !V(n))
+                }
+                function Ft(e) {
+                    let i = e.replace(/([.*+?^${}()|\[\]\/\\])/g, "\\$1");
+                    return new RegExp(`(url\\(['"]?)(${i})(['"]?\\))`,"g")
+                }
+                var Ut = ["background-image", "border-image-source", "-webkit-border-image", "-webkit-mask-image", "list-style-image"];
+                function $t(e, i) {
+                    return Ut.map(t => {
+                        let n = e.getPropertyValue(t);
+                        return !n || n === "none" ? null : ((B || z) && i.drawImageCount++,
+                        Ce(n, null, i, !0).then(r => {
+                            !r || n === r || e.setProperty(t, r, e.getPropertyPriority(t))
+                        }
+                        ))
+                    }
+                    ).filter(Boolean)
+                }
+                function Wt(e, i) {
+                    if (L(e)) {
+                        let t = e.currentSrc || e.src;
+                        if (!V(t))
+                            return [N(i, {
+                                url: t,
+                                imageDom: e,
+                                requestType: "image",
+                                responseType: "dataUrl"
+                            }).then(n => {
+                                n && (e.srcset = "",
+                                e.dataset.originalSrc = t,
+                                e.src = n || "")
+                            }
+                            )];
+                        (B || z) && i.drawImageCount++
+                    } else if (_(e) && !V(e.href.baseVal)) {
+                        let t = e.href.baseVal;
+                        return [N(i, {
+                            url: t,
+                            imageDom: e,
+                            requestType: "image",
+                            responseType: "dataUrl"
+                        }).then(n => {
+                            n && (e.dataset.originalSrc = t,
+                            e.href.baseVal = n || "")
+                        }
+                        )]
+                    }
+                    return []
+                }
+                function Gt(e, i) {
+                    let {ownerDocument: t, svgDefsElement: n} = i
+                      , r = e.getAttribute("href") ?? e.getAttribute("xlink:href");
+                    if (!r)
+                        return [];
+                    let[o,l] = r.split("#");
+                    if (l) {
+                        let s = `#${l}`
+                          , c = t?.querySelector(`svg ${s}`);
+                        if (o && e.setAttribute("href", s),
+                        n?.querySelector(s))
+                            return [];
+                        if (c)
+                            return n?.appendChild(c.cloneNode(!0)),
+                            [];
+                        if (o)
+                            return [N(i, {
+                                url: o,
+                                responseType: "text"
+                            }).then(h => {
+                                n?.insertAdjacentHTML("beforeend", h)
+                            }
+                            )]
+                    }
+                    return []
+                }
+                function Re(e, i) {
+                    let {tasks: t} = i;
+                    S(e) && ((L(e) || pe(e)) && t.push(...Wt(e, i)),
+                    Ye(e) && t.push(...Gt(e, i))),
+                    R(e) && t.push(...$t(e.style, i)),
+                    e.childNodes.forEach(n => {
+                        Re(n, i)
+                    }
+                    )
+                }
+                async function Vt(e, i) {
+                    let {ownerDocument: t, svgStyleElement: n, fontFamilies: r, fontCssTexts: o, tasks: l, font: s} = i;
+                    if (!(!t || !n || !r.size))
+                        if (s && s.cssText) {
+                            let c = ce(s.cssText, i);
+                            n.appendChild(t.createTextNode(`${c}
+`))
+                        } else {
+                            let c = Array.from(t.styleSheets).filter(a => {
+                                try {
+                                    return "cssRules"in a && !!a.cssRules.length
+                                } catch (d) {
+                                    return i.log.warn(`Error while reading CSS rules from ${a.href}`, d),
+                                    !1
+                                }
+                            }
+                            );
+                            await Promise.all(c.flatMap(a => Array.from(a.cssRules).map(async (d, u) => {
+                                if (Xe(d)) {
+                                    let m = u + 1
+                                      , g = d.href
+                                      , f = "";
+                                    try {
+                                        f = await N(i, {
+                                            url: g,
+                                            requestType: "text",
+                                            responseType: "text"
+                                        })
+                                    } catch (b) {
+                                        i.log.warn(`Error fetch remote css import from ${g}`, b)
+                                    }
+                                    let p = f.replace(Le, (b, w, E) => b.replace(E, be(E, g)));
+                                    for (let b of zt(p))
+                                        try {
+                                            a.insertRule(b, b.startsWith("@import") ? m += 1 : a.cssRules.length)
+                                        } catch (w) {
+                                            i.log.warn("Error inserting rule from remote css import", {
+                                                rule: b,
+                                                error: w
+                                            })
+                                        }
+                                }
+                            }
+                            ))),
+                            c.flatMap(a => Array.from(a.cssRules)).filter(a => qe(a) && He(a.style.getPropertyValue("src")) && we(a.style.getPropertyValue("font-family"))?.some(d => r.has(d))).forEach(a => {
+                                let d = a
+                                  , u = o.get(d.cssText);
+                                u ? n.appendChild(t.createTextNode(`${u}
+`)) : l.push(Ce(d.cssText, d.parentStyleSheet ? d.parentStyleSheet.href : null, i).then(m => {
+                                    m = ce(m, i),
+                                    o.set(d.cssText, m),
+                                    n.appendChild(t.createTextNode(`${m}
+`))
+                                }
+                                ))
+                            }
+                            )
+                        }
+                }
+                var jt = /(\/\*[\s\S]*?\*\/)/g
+                  , ae = /((@.*?keyframes [\s\S]*?){([\s\S]*?}\s*?)})/gi;
+                function zt(e) {
+                    if (e == null)
+                        return [];
+                    let i = []
+                      , t = e.replace(jt, "");
+                    for (; ; ) {
+                        let o = ae.exec(t);
+                        if (!o)
+                            break;
+                        i.push(o[0])
+                    }
+                    t = t.replace(ae, "");
+                    let n = /@import[\s\S]*?url\([^)]*\)[\s\S]*?;/gi
+                      , r = new RegExp("((\\s*?(?:\\/\\*[\\s\\S]*?\\*\\/)?\\s*?@media[\\s\\S]*?){([\\s\\S]*?)}\\s*?})|(([\\s\\S]*?){([\\s\\S]*?)})","gi");
+                    for (; ; ) {
+                        let o = n.exec(t);
+                        if (o)
+                            r.lastIndex = n.lastIndex;
+                        else if (o = r.exec(t),
+                        o)
+                            n.lastIndex = r.lastIndex;
+                        else
+                            break;
+                        i.push(o[0])
+                    }
+                    return i
+                }
+                var qt = /url\([^)]+\)\s*format\((["']?)([^"']+)\1\)/g
+                  , Xt = /src:\s*(?:url\([^)]+\)\s*format\([^)]+\)[,;]\s*)+/g;
+                function ce(e, i) {
+                    let {font: t} = i
+                      , n = t ? t?.preferredFormat : void 0;
+                    return n ? e.replace(Xt, r => {
+                        for (; ; ) {
+                            let[o,,l] = qt.exec(r) || [];
+                            if (!l)
+                                return "";
+                            if (l === n)
+                                return `src: ${o};`
+                        }
+                    }
+                    ) : e
+                }
+                async function Yt(e, i) {
+                    let t = await q(e, i);
+                    if (S(t.node) && _(t.node))
+                        return t.node;
+                    let {ownerDocument: n, log: r, tasks: o, svgStyleElement: l, svgDefsElement: s, svgStyles: c, font: h, progress: a, autoDestruct: d, onCloneNode: u, onEmbedNode: m, onCreateForeignObjectSvg: g} = t;
+                    r.time("clone node");
+                    let f = await X(t.node, t, !0);
+                    if (l && n) {
+                        let y = "";
+                        c.forEach( (A, T) => {
+                            y += `${A.join(`,
+`)} {
+  ${T}
 }
-.ctrl-btn:active,.ctrl-btn.pressed{
-  background:radial-gradient(circle at 35% 35%,rgba(200,0,0,0.9),rgba(100,0,0,1));
-  border-color:rgba(255,80,0,0.75);
-  transform:scale(0.9) translateY(2px);
-  box-shadow:0 2px 7px rgba(0,0,0,0.6);
-}
-#ctrl-left,#ctrl-right{font-size:24px}
-#ctrl-jump{
-  width:62px;height:62px;
-  background:radial-gradient(circle at 35% 35%,rgba(0,70,140,0.75),rgba(0,20,60,0.95));
-  border-color:rgba(0,100,200,0.55);border-bottom-color:rgba(0,40,100,0.9);
-  box-shadow:0 5px 14px rgba(0,0,0,0.6),inset 0 1px 0 rgba(0,120,255,0.25);
-}
-#ctrl-jump:active,#ctrl-jump.pressed{
-  background:radial-gradient(circle at 35% 35%,rgba(0,120,240,0.9),rgba(0,60,160,1));
-  border-color:rgba(0,160,255,0.75);
-}
-#ctrl-attack{
-  width:60px;height:60px;
-  background:radial-gradient(circle at 35% 35%,rgba(130,65,0,0.75),rgba(60,20,0,0.95));
-  border-color:rgba(200,100,0,0.55);border-bottom-color:rgba(100,40,0,0.9);
-  box-shadow:0 5px 14px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,160,0,0.25);
-}
-#ctrl-attack:active,#ctrl-attack.pressed{
-  background:radial-gradient(circle at 35% 35%,rgba(210,105,0,0.9),rgba(130,55,0,1));
-  border-color:rgba(255,160,0,0.75);
-}
-</style>
-</head>
-<body>
+`
+                        }
+                        ),
+                        l.appendChild(n.createTextNode(y))
+                    }
+                    r.timeEnd("clone node"),
+                    await u?.(f),
+                    h !== !1 && S(f) && (r.time("embed web font"),
+                    await Vt(f, t),
+                    r.timeEnd("embed web font")),
+                    r.time("embed node"),
+                    Re(f, t);
+                    let p = o.length
+                      , b = 0
+                      , w = async () => {
+                        for (; ; ) {
+                            let y = o.pop();
+                            if (!y)
+                                break;
+                            try {
+                                await y
+                            } catch (A) {
+                                t.log.warn("Failed to run task", A)
+                            }
+                            a?.(++b, p)
+                        }
+                    }
+                    ;
+                    a?.(b, p),
+                    await Promise.all([...Array.from({
+                        length: 4
+                    })].map(w)),
+                    r.timeEnd("embed node"),
+                    await m?.(f);
+                    let E = Kt(f, t);
+                    return s && E.insertBefore(s, E.children[0]),
+                    l && E.insertBefore(l, E.children[0]),
+                    d && Ot(t),
+                    await g?.(E),
+                    E
+                }
+                function Kt(e, i) {
+                    let {width: t, height: n} = i
+                      , r = at(t, n, e.ownerDocument)
+                      , o = r.ownerDocument.createElementNS(r.namespaceURI, "foreignObject");
+                    return o.setAttributeNS(null, "x", "0%"),
+                    o.setAttributeNS(null, "y", "0%"),
+                    o.setAttributeNS(null, "width", "100%"),
+                    o.setAttributeNS(null, "height", "100%"),
+                    o.append(e),
+                    r.appendChild(o),
+                    r
+                }
+                async function Jt(e, i) {
+                    let t = await q(e, i)
+                      , n = await Yt(t)
+                      , r = ct(n, t.isEnable("removeControlCharacter"));
+                    t.autoDestruct || (t.svgStyleElement = ye(t.ownerDocument),
+                    t.svgDefsElement = t.ownerDocument?.createElementNS(U, "defs"),
+                    t.svgStyles.clear());
+                    let o = H(r, n.ownerDocument);
+                    return await vt(o, t)
+                }
+                async function Y(e, i) {
+                    let t = await q(e, i)
+                      , {log: n, type: r, quality: o, dpi: l} = t
+                      , s = await Jt(t);
+                    n.time("canvas to blob");
+                    let c = await ht(s, r, o);
+                    if (["image/png", "image/jpeg"].includes(r) && l) {
+                        let h = await gt(c.slice(0, 33))
+                          , a = new Uint8Array(h);
+                        return r === "image/png" ? a = Ge(a, l) : r === "image/jpeg" && (a = Fe(a, l)),
+                        n.timeEnd("canvas to blob"),
+                        new Blob([a, c.slice(33)],{
+                            type: r
+                        })
+                    }
+                    return n.timeEnd("canvas to blob"),
+                    c
+                }
+                var I = {
+                    METADATA: "data-replit-metadata",
+                    COMPONENT_NAME: "data-component-name"
+                };
+                function xe(e) {
+                    if (e.startsWith("http://localhost:"))
+                        return !0;
+                    try {
+                        let i = new URL(e);
+                        return v.ALLOWED_PARENT_DOMAINS.some(t => i.hostname === t.slice(1) || i.hostname.endsWith(t))
+                    } catch {
+                        return !1
+                    }
+                }
+                function K(e) {
+                    if (!e)
+                        return null;
+                    let i = document.elementFromPoint(e.clientX, e.clientY);
+                    return i instanceof HTMLElement ? i : null
+                }
+                function Qt(e, i=300) {
+                    if (!e)
+                        return "";
+                    let t = String(e);
+                    return t.length <= i ? t : t.slice(0, i) + "..."
+                }
+                function W(e) {
+                    let i = e.getAttribute(I.COMPONENT_NAME) ?? e.tagName.toLowerCase();
+                    return Qt(i, 50)
+                }
+                function J(e) {
+                    return e.className.toString ? e.className.toString() : String(e.className)
+                }
+                function Ne(e, i=80) {
+                    let t = "";
+                    for (let n = 0; n < e.childNodes.length; n++) {
+                        let r = e.childNodes[n];
+                        if (r.nodeType === Node.TEXT_NODE && (t += r.textContent ?? "",
+                        t.length > i))
+                            return t.slice(0, i) + "..."
+                    }
+                    return t.trim()
+                }
+                var Zt = new Set(["script", "style", "noscript", "link", "meta", "br", "svg"]);
+                function _e(e) {
+                    let i = {
+                        children: [],
+                        parent: null
+                    };
+                    return Object.defineProperty(i, "parent", {
+                        value: e,
+                        writable: !0,
+                        enumerable: !1,
+                        configurable: !0
+                    }),
+                    i
+                }
+                function Ie(e, i, t, n) {
+                    let r = _e(i)
+                      , o = {
+                        tagName: e.tagName.toLowerCase(),
+                        textContent: Ne(e),
+                        id: e.id || void 0,
+                        className: J(e) || void 0,
+                        nodeId: t.get(e),
+                        relatedElements: r
+                    };
+                    n.set(e, o);
+                    for (let l = 0; l < e.children.length; l++)
+                        Ie(e.children[l], o, t, n)
+                }
+                var $ = class {
+                    ids = new WeakMap;
+                    nextId = 0;
+                    get(i) {
+                        let t = this.ids.get(i);
+                        if (t !== void 0)
+                            return t;
+                        let n = this.nextId++;
+                        return this.ids.set(i, n),
+                        n
+                    }
+                }
+                ;
+                function Q(e, i, t, n, r) {
+                    let o = t.get(e)
+                      , l = _e(i)
+                      , s = l.children
+                      , c = {
+                        tagName: e.tagName.toLowerCase(),
+                        textContent: Ne(e),
+                        id: e.id || void 0,
+                        className: J(e) || void 0,
+                        nodeId: o,
+                        relatedElements: l
+                    };
+                    n.set(e, c);
+                    for (let h = 0; h < e.children.length; h++) {
+                        let a = e.children[h]
+                          , d = a.tagName.toLowerCase();
+                        if (a !== r) {
+                            if (d === "svg") {
+                                Ie(a, c, t, n);
+                                continue
+                            }
+                            Zt.has(d) || s.push(Q(a, c, t, n, r))
+                        }
+                    }
+                    return c
+                }
+                function Z(e, i) {
+                    let t = window.getComputedStyle(e)
+                      , n = f => f.toLowerCase() === "currentcolor" ? t.color : f
+                      , r = n(t.borderTopColor)
+                      , o = n(t.borderRightColor)
+                      , l = n(t.borderBottomColor)
+                      , s = n(t.borderLeftColor)
+                      , c = e.nextElementSibling
+                      , h = e.parentElement?.parentElement ?? null
+                      , a = {
+                        backgroundColor: t.backgroundColor,
+                        borderTopColor: r,
+                        borderRightColor: o,
+                        borderBottomColor: l,
+                        borderLeftColor: s,
+                        borderTopLeftRadius: t.borderTopLeftRadius,
+                        borderTopRightRadius: t.borderTopRightRadius,
+                        borderBottomRightRadius: t.borderBottomRightRadius,
+                        borderBottomLeftRadius: t.borderBottomLeftRadius,
+                        borderTopWidth: t.borderTopWidth,
+                        borderRightWidth: t.borderRightWidth,
+                        borderBottomWidth: t.borderBottomWidth,
+                        borderLeftWidth: t.borderLeftWidth,
+                        color: t.color,
+                        display: t.display,
+                        position: t.position,
+                        width: t.width,
+                        height: t.height,
+                        fontSize: t.fontSize,
+                        fontFamily: t.fontFamily,
+                        fontWeight: t.fontWeight,
+                        margin: t.margin,
+                        padding: t.padding,
+                        opacity: t.opacity,
+                        textAlign: t.textAlign
+                    }
+                      , d = i.get(e)
+                      , u = e.parentElement ? i.get(e.parentElement) ?? null : null
+                      , m = {
+                        children: d?.relatedElements.children ?? [],
+                        parent: d?.relatedElements.parent ?? u,
+                        nextSibling: c ? i.get(c) ?? void 0 : void 0,
+                        grandParent: h ? i.get(h) ?? void 0 : void 0
+                    };
+                    return {
+                        tagName: e.tagName.toLowerCase(),
+                        nodeId: d?.nodeId,
+                        elementPath: e.getAttribute(I.METADATA) ?? "",
+                        elementName: W(e),
+                        textContent: e.textContent ?? "",
+                        originalTextContent: e.getAttribute("data-original-text") ? decodeURIComponent(e.getAttribute("data-original-text") ?? "") : void 0,
+                        srcAttribute: e.getAttribute("src") ?? "",
+                        hasChildElements: e.childElementCount > 0,
+                        id: e.id,
+                        className: J(e),
+                        computedStyles: a,
+                        textAlign: t.textAlign,
+                        relatedElements: m
+                    }
+                }
+                async function Me(e) {
+                    try {
+                        let t = window.getComputedStyle(e).backgroundColor;
+                        return De(t) && (t = window.getComputedStyle(document.documentElement).backgroundColor),
+                        await Y(e, {
+                            type: "image/png",
+                            backgroundColor: t
+                        })
+                    } catch (i) {
+                        console.error("[replit-cartographer] Failed to take screenshot:", i);
+                        return
+                    }
+                }
+                function De(e) {
+                    return e === "transparent" || e === "rgba(0, 0, 0, 0)" || e.endsWith(", 0)") || e.endsWith(",0)")
+                }
+                async function Pe() {
+                    try {
+                        let e = document.documentElement
+                          , i = window.getComputedStyle(e).backgroundColor
+                          , t = De(i) ? "#ffffff" : i;
+                        return await Y(e, {
+                            type: "image/png",
+                            backgroundColor: t
+                        })
+                    } catch (e) {
+                        console.error("[replit-cartographer] Failed to take page screenshot:", e);
+                        return
+                    }
+                }
+                function ee(e) {
+                    let i = e.getBoundingClientRect()
+                      , t = window.innerHeight
+                      , n = window.innerWidth;
+                    return i.bottom > 0 && i.top < t && i.right > 0 && i.left < n
+                }
+                function M(e, i=v.MAX_SIBLING_HIGHLIGHTERS, t=!1) {
+                    let o = e.getAttribute(I.METADATA);
+                    if (!o)
+                        return [];
+                    let l = `[${I.METADATA}="${o}"]`
+                      , s = document
+                      , c = e.parentElement;
+                    c && c.childElementCount > 50 && (s = c);
+                    let h = s.querySelectorAll(l)
+                      , a = Math.min(i, 5e3)
+                      , d = []
+                      , u = 0;
+                    for (let m = 0; m < h.length && u < a; m++) {
+                        let g = h[m];
+                        if (g instanceof HTMLElement && g !== e) {
+                            if (t && !ee(g))
+                                continue;
+                            d.push(g),
+                            u++
+                        }
+                    }
+                    return d
+                }
+                function Oe(e, i, t) {
+                    let n = e.children;
+                    for (let r = 0; r < n.length; r++)
+                        if (t.value += 1,
+                        t.value > i || Oe(n[r], i, t))
+                            return !0;
+                    return !1
+                }
+                function Be(e) {
+                    let i = {
+                        value: 0
+                    };
+                    return Oe(e, v.MAX_DESCENDANTS_FOR_SCREENSHOT, i)
+                }
+                var D = class {
+                    selectedElement = null;
+                    selectedSiblingElements = [];
+                    visibleSelectedSiblingElements = [];
+                    isActive = !1;
+                    lastHighlightedElement = null;
+                    enableEditing = !1;
+                    shadowHost = null;
+                    shadowRoot = null;
+                    hoverHighlighter = null;
+                    hoverLabel = null;
+                    selectedHighlighter = null;
+                    selectedLabel = null;
+                    hoverSiblingHighlighters = [];
+                    selectedSiblingHighlighters = [];
+                    mutationObserver = null;
+                    stableIds = new $;
+                    nodeMap = new Map;
+                    throttledRecalculate = null;
+                    constructor() {
+                        this.setupMessageListener(),
+                        this.observeLightDarkModeSwitch(),
+                        this.notifyScriptLoaded(),
+                        this.throttledRecalculate = this.throttleRAF(this.recalculateSelectedElement.bind(this))
+                    }
+                    throttleRAF(i) {
+                        let t = null
+                          , n = null;
+                        return (...r) => {
+                            n = r,
+                            t === null && (t = requestAnimationFrame( () => {
+                                n !== null && i(...n),
+                                t = null,
+                                n = null
+                            }
+                            ))
+                        }
+                    }
+                    isPureTextElement(i) {
+                        if (!i || !(i instanceof HTMLElement))
+                            return !1;
+                        let t = i.tagName.toLowerCase();
+                        return t === "style" || t === "script" || t === "img" || i.childElementCount > 0 ? !1 : Array.from(i.childNodes).every(r => r.nodeType === Node.TEXT_NODE)
+                    }
+                    initializeHighlighter() {
+                        this.shadowHost = document.createElement("div"),
+                        this.shadowHost.style.all = "initial",
+                        this.shadowRoot = this.shadowHost.attachShadow({
+                            mode: "open"
+                        }),
+                        document.body.appendChild(this.shadowHost);
+                        let i = document.createElement("style");
+                        i.textContent = ne,
+                        this.shadowRoot.appendChild(i);
+                        let t = document.createElement("style");
+                        t.textContent = ie,
+                        document.head.appendChild(t),
+                        this.hoverHighlighter = document.createElement("div"),
+                        this.hoverLabel = document.createElement("div"),
+                        this.hoverHighlighter.className = "beacon-highlighter beacon-hover-highlighter",
+                        this.hoverLabel.className = "beacon-label beacon-hover-label",
+                        this.selectedHighlighter = document.createElement("div"),
+                        this.selectedLabel = document.createElement("div"),
+                        this.selectedHighlighter.className = "beacon-highlighter beacon-selected-highlighter",
+                        this.selectedLabel.className = "beacon-label beacon-selected-label",
+                        this.shadowRoot.appendChild(this.selectedHighlighter),
+                        this.shadowRoot.appendChild(this.selectedLabel),
+                        this.shadowRoot.appendChild(this.hoverHighlighter),
+                        this.shadowRoot.appendChild(this.hoverLabel)
+                    }
+                    setupMessageListener() {
+                        window.addEventListener("message", this.handleMessage.bind(this))
+                    }
+                    notifyScriptLoaded() {
+                        this.postMessageToParent({
+                            type: "SELECTOR_SCRIPT_LOADED",
+                            timestamp: Date.now(),
+                            version: O
+                        })
+                    }
+                    postMessageToParent(i) {
+                        window.parent && window.parent.postMessage(i, "*")
+                    }
+                    handleMouseMove = i => {
+                        if (this.isActive && this.hoverHighlighter) {
+                            let t = K(i);
+                            if (!t || t === this.hoverHighlighter || t === this.selectedHighlighter || t === this.shadowHost || this.selectedSiblingHighlighters.includes(t) || this.hoverSiblingHighlighters.includes(t)) {
+                                this.hideHighlight(this.hoverHighlighter, this.hoverLabel),
+                                this.lastHighlightedElement = null,
+                                this.clearHoverSiblingHighlighters();
+                                return
+                            }
+                            if (t === this.selectedElement) {
+                                this.hideHighlight(this.hoverHighlighter, this.hoverLabel),
+                                this.lastHighlightedElement = null,
+                                this.clearHoverSiblingHighlighters();
+                                return
+                            }
+                            this.lastHighlightedElement && this.lastHighlightedElement !== t && this.lastHighlightedElement !== this.selectedElement && this.lastHighlightedElement.removeAttribute("contenteditable"),
+                            this.lastHighlightedElement = t,
+                            this.updateHighlighterPosition(t, this.hoverHighlighter, this.hoverLabel)
+                        }
+                    }
+                    ;
+                    handleMouseLeave = () => {
+                        this.isActive && (this.hoverHighlighter && (this.hoverHighlighter.style.opacity = "0"),
+                        this.hoverLabel && (this.hoverLabel.style.opacity = "0"),
+                        this.hoverSiblingHighlighters.length > 0 && this.clearHoverSiblingHighlighters(),
+                        this.lastHighlightedElement && this.lastHighlightedElement !== this.selectedElement && this.lastHighlightedElement.removeAttribute("contenteditable"))
+                    }
+                    ;
+                    calculateLabelPosition(i, t) {
+                        return t < 28 ? {
+                            top: `${t}px`,
+                            left: `${i.left}px`,
+                            transform: "none",
+                            marginTop: "2px"
+                        } : {
+                            top: `${t}px`,
+                            left: `${i.left}px`,
+                            transform: "translateY(-100%)",
+                            marginTop: "-4px"
+                        }
+                    }
+                    updateHighlighterPosition(i, t, n) {
+                        if (!t || !n)
+                            return;
+                        let r = M(i, v.MAX_SIBLING_HIGHLIGHTERS, !1);
+                        this.enableEditing && r.length <= 1 && i === this.selectedElement && this.isPureTextElement(i) && i.setAttribute("contenteditable", "plaintext-only");
+                        let o = i.getBoundingClientRect()
+                          , l = window.innerHeight
+                          , s = Math.max(0, o.top)
+                          , c = Math.min(l, o.bottom)
+                          , h = Math.max(0, c - s);
+                        Object.assign(t.style, {
+                            opacity: h > 0 ? "1" : "0",
+                            top: `${s}px`,
+                            left: `${o.left}px`,
+                            width: `${o.width}px`,
+                            height: `${h}px`
+                        }),
+                        n.textContent = W(i);
+                        let a = this.calculateLabelPosition(o, s);
+                        Object.assign(n.style, {
+                            ...a,
+                            opacity: h > 0 ? "1" : "0"
+                        }),
+                        t === this.selectedHighlighter ? this.highlightSelectedSiblings(i) : this.highlightHoverSiblings(i)
+                    }
+                    hideHighlight(i, t) {
+                        i && (i.style.opacity = "0"),
+                        t && (t.style.opacity = "0");
+                        let n = i === this.hoverHighlighter
+                          , r = i === this.selectedHighlighter;
+                        n && this.clearHoverSiblingHighlighters(),
+                        r && this.clearSelectedSiblingHighlighters()
+                    }
+                    handleClick = async i => {
+                        if (!this.isActive)
+                            return;
+                        i.preventDefault(),
+                        i.stopPropagation();
+                        let t = K(i);
+                        if ((!t || t === this.hoverHighlighter || t === this.selectedHighlighter || t === this.shadowHost) && (t = this.lastHighlightedElement),
+                        !t || t === this.selectedElement)
+                            return;
+                        this.unselectCurrentElement(),
+                        this.clearSelectedSiblingHighlighters(),
+                        this.selectedElement = t;
+                        let n = M(t)
+                          , r = n.length > 0;
+                        r && this.highlightSelectedSiblings(t),
+                        t.hasAttribute("data-original-text") || t.setAttribute("data-original-text", encodeURIComponent(t.textContent ?? "")),
+                        !t.hasAttribute("data-original-style") && t.hasAttribute("style") && t.setAttribute("data-original-style", encodeURIComponent(t.getAttribute("style") ?? "")),
+                        !t.hasAttribute("data-original-src") && t.hasAttribute("src") && t.setAttribute("data-original-src", encodeURIComponent(t.getAttribute("src") ?? "")),
+                        !r && this.enableEditing && this.isPureTextElement(t) && (this.selectedElement.setAttribute("contenteditable", "plaintext-only"),
+                        this.selectedElement.focus()),
+                        this.selectedHighlighter && this.selectedLabel && (this.selectedHighlighter.style.outlineStyle = "solid",
+                        this.selectedHighlighter.style.opacity = "1",
+                        this.selectedHighlighter.style.pointerEvents = "none",
+                        this.selectedLabel.style.opacity = "1",
+                        this.selectedLabel.textContent = W(t)),
+                        this.hoverHighlighter && (this.hoverHighlighter.style.opacity = "0",
+                        this.hoverHighlighter.style.pointerEvents = "none"),
+                        this.hoverLabel && (this.hoverLabel.style.opacity = "0"),
+                        this.clearHoverSiblingHighlighters(),
+                        this.updateHighlighterPosition(t, this.selectedHighlighter, this.selectedLabel),
+                        this.nodeMap = new Map,
+                        Q(document.body, null, this.stableIds, this.nodeMap, this.shadowHost);
+                        let o = Z(t, this.nodeMap), l;
+                        if (!Be(t))
+                            try {
+                                l = await Me(t)
+                            } catch (s) {
+                                console.error("[replit-cartographer] Error capturing element screenshot:", s)
+                            }
+                        this.observeSelectedElement(),
+                        this.postMessageToParent({
+                            type: "ELEMENT_SELECTED",
+                            payload: {
+                                ...o,
+                                screenshotBlob: l ?? void 0,
+                                siblingCount: r ? n.length : 0
+                            },
+                            timestamp: Date.now()
+                        })
+                    }
+                    ;
+                    restoreElements() {
+                        document.querySelectorAll('[data-replit-dirty="true"]').forEach(t => {
+                            if (t.hasAttribute("data-original-text")) {
+                                if (t.textContent !== decodeURIComponent(t.getAttribute("data-original-text") || "")) {
+                                    let n = decodeURIComponent(t.getAttribute("data-original-text") || "");
+                                    t.textContent = n
+                                }
+                                t.removeAttribute("data-original-text")
+                            }
+                            if (t.hasAttribute("data-original-style")) {
+                                let n = decodeURIComponent(t.getAttribute("data-original-style") || "");
+                                t.setAttribute("style", n),
+                                t.removeAttribute("data-original-style")
+                            } else
+                                t.removeAttribute("style");
+                            if (t.hasAttribute("data-original-src") && t.getAttribute("src") !== decodeURIComponent(t.getAttribute("data-original-src") || "")) {
+                                let n = decodeURIComponent(t.getAttribute("data-original-src") || "");
+                                t.setAttribute("src", n),
+                                t.removeAttribute("data-original-src")
+                            }
+                            t.removeAttribute("data-replit-dirty")
+                        }
+                        )
+                    }
+                    unselectCurrentElement() {
+                        if (this.restoreElements(),
+                        this.selectedElement) {
+                            if (this.selectedElement.removeAttribute("contenteditable"),
+                            this.selectedElement.hasAttribute("data-original-style")) {
+                                let i = decodeURIComponent(this.selectedElement.getAttribute("data-original-style") || "");
+                                this.selectedElement.setAttribute("style", i),
+                                this.selectedElement.removeAttribute("data-original-style")
+                            }
+                            if (this.selectedElement.hasAttribute("data-original-src") && this.selectedElement.getAttribute("src") !== decodeURIComponent(this.selectedElement.getAttribute("data-original-src") || "")) {
+                                let i = decodeURIComponent(this.selectedElement.getAttribute("data-original-src") || "");
+                                this.selectedElement.setAttribute("src", i),
+                                this.selectedElement.removeAttribute("data-original-src")
+                            }
+                            this.selectedElement = null
+                        }
+                        this.clearSelectedSiblingHighlighters(),
+                        this.mutationObserver && (this.mutationObserver.disconnect(),
+                        this.mutationObserver = null)
+                    }
+                    handleMessage = i => {
+                        if (!xe(i.origin))
+                            return;
+                        let t = i.data;
+                        if (!(!t || typeof t != "object"))
+                            switch (t.type) {
+                            case "TOGGLE_REPLIT_VISUAL_EDITOR":
+                                {
+                                    this.handleVisualEditorToggle(t);
+                                    break
+                                }
+                            case "CLEAR_SELECTION":
+                                {
+                                    this.unselectCurrentElement(),
+                                    this.hideHighlight(this.selectedHighlighter, this.selectedLabel);
+                                    break
+                                }
+                            case "UPDATE_SELECTED_ELEMENT":
+                                {
+                                    if (!this.selectedElement)
+                                        return;
+                                    let {attributes: n} = t;
+                                    [this.selectedElement, ...this.selectedSiblingElements].forEach(o => {
+                                        n.style !== void 0 && (o.setAttribute("style", n.style),
+                                        o.setAttribute("data-replit-dirty", "true")),
+                                        n.textContent !== void 0 && (o.textContent = n.textContent,
+                                        o.setAttribute("data-replit-dirty", "true")),
+                                        n.className !== void 0 && (o.className = n.className,
+                                        o.setAttribute("data-replit-dirty", "true")),
+                                        n.src !== void 0 && (o.setAttribute("src", n.src),
+                                        o.setAttribute("data-replit-dirty", "true"))
+                                    }
+                                    ),
+                                    this.updateHighlighterPosition(this.selectedElement, this.selectedHighlighter, this.selectedLabel),
+                                    this.selectedSiblingElements.length > 0 && (this.clearHighlighters(this.selectedSiblingHighlighters),
+                                    this.selectedSiblingHighlighters = [],
+                                    this.selectedSiblingHighlighters = this.highlightElements(this.selectedSiblingElements));
+                                    break
+                                }
+                            case "CLEAR_ELEMENT_DIRTY":
+                                {
+                                    this.selectedElement && this.selectedElement.removeAttribute("data-replit-dirty");
+                                    break
+                                }
+                            case "APPLY_THEME_PREVIEW":
+                                {
+                                    this.handleApplyThemePreview(t);
+                                    break
+                                }
+                            case "CLEAR_THEME_PREVIEW":
+                                {
+                                    this.handleClearThemePreview();
+                                    break
+                                }
+                            case "SCREENSHOT_PAGE":
+                                {
+                                    this.handleScreenshotPage(t.requestId);
+                                    break
+                                }
+                            }
+                    }
+                    ;
+                    handleApplyThemePreview(i) {
+                        if (i.type !== "APPLY_THEME_PREVIEW")
+                            return;
+                        let t = document.getElementById(v.THEME_PREVIEW_STYLE_ID);
+                        t || (t = document.createElement("style"),
+                        t.id = v.THEME_PREVIEW_STYLE_ID,
+                        document.head.appendChild(t)),
+                        t.textContent = i.themeContent
+                    }
+                    handleClearThemePreview() {
+                        let i = document.getElementById(v.THEME_PREVIEW_STYLE_ID);
+                        i && i.remove()
+                    }
+                    async handleScreenshotPage(i) {
+                        try {
+                            let t = await Pe();
+                            this.postMessageToParent({
+                                type: "SCREENSHOT_PAGE_RESULT",
+                                timestamp: Date.now(),
+                                requestId: i,
+                                screenshotBlob: t
+                            })
+                        } catch (t) {
+                            console.error("[replit-cartographer] Error capturing page screenshot:", t),
+                            this.postMessageToParent({
+                                type: "SCREENSHOT_PAGE_RESULT",
+                                timestamp: Date.now(),
+                                requestId: i,
+                                error: t instanceof Error ? t.message : "Unknown screenshot error"
+                            })
+                        }
+                    }
+                    handleVisualEditorToggle(i) {
+                        if (i.type !== "TOGGLE_REPLIT_VISUAL_EDITOR")
+                            return;
+                        let t = !!i.enabled;
+                        this.enableEditing = !!i.enableEditing,
+                        t ? (window.dispatchEvent(new CustomEvent("replit-init-tailwind")),
+                        this.postMessageToParent({
+                            type: "REPLIT_VISUAL_EDITOR_ENABLED",
+                            timestamp: Date.now()
+                        })) : this.postMessageToParent({
+                            type: "REPLIT_VISUAL_EDITOR_DISABLED",
+                            timestamp: Date.now()
+                        }),
+                        this.isActive !== t && (this.isActive = t,
+                        this.toggleEventListeners(t))
+                    }
+                    observeSelectedElement() {
+                        if (this.selectedElement) {
+                            if (!this.isPureTextElement(this.selectedElement)) {
+                                this.mutationObserver && (this.mutationObserver.disconnect(),
+                                this.mutationObserver = null);
+                                return
+                            }
+                            this.mutationObserver && this.mutationObserver.disconnect(),
+                            this.mutationObserver = new MutationObserver(i => {
+                                if (i.some(n => n.type === "characterData") && this.selectedElement) {
+                                    this.selectedElement.setAttribute("data-replit-dirty", "true");
+                                    let n = Z(this.selectedElement, this.nodeMap);
+                                    this.postMessageToParent({
+                                        type: "ELEMENT_TEXT_CHANGED",
+                                        payload: n,
+                                        timestamp: Date.now()
+                                    }),
+                                    this.updateHighlighterPosition(this.selectedElement, this.selectedHighlighter, this.selectedLabel)
+                                }
+                            }
+                            ),
+                            this.mutationObserver.observe(this.selectedElement, {
+                                characterData: !0,
+                                childList: !1,
+                                attributes: !1,
+                                subtree: !0
+                            })
+                        }
+                    }
+                    observeLightDarkModeSwitch() {
+                        let i = new MutationObserver(n => {
+                            n.forEach(r => {
+                                r.type === "attributes" && r.attributeName === "class" && (r.target.classList.contains("dark") ? this.postMessageToParent({
+                                    type: "DARK_MODE_USED",
+                                    timestamp: Date.now()
+                                }) : this.postMessageToParent({
+                                    type: "LIGHT_MODE_USED",
+                                    timestamp: Date.now()
+                                }))
+                            }
+                            )
+                        }
+                        )
+                          , t = document.documentElement;
+                        i.observe(t, {
+                            attributes: !0,
+                            attributeFilter: ["class"],
+                            childList: !1,
+                            subtree: !1
+                        })
+                    }
+                    recalculateSelectedElement = () => {
+                        this.isActive && (this.selectedElement && this.updateHighlighterPosition(this.selectedElement, this.selectedHighlighter, this.selectedLabel),
+                        this.lastHighlightedElement && this.updateHighlighterPosition(this.lastHighlightedElement, this.hoverHighlighter, this.hoverLabel),
+                        this.selectedSiblingElements.length > 0 && this.updateSiblingHighlighterPositions())
+                    }
+                    ;
+                    updateSiblingHighlighterPositions() {
+                        for (let i = 0; i < this.selectedSiblingHighlighters.length; i++) {
+                            let t = this.selectedSiblingHighlighters[i]
+                              , n = this.visibleSelectedSiblingElements[i];
+                            if (!t || !n)
+                                continue;
+                            let r = n.getBoundingClientRect()
+                              , o = window.innerHeight
+                              , l = Math.max(0, r.top)
+                              , s = Math.min(o, r.bottom)
+                              , c = Math.max(0, s - l);
+                            Object.assign(t.style, {
+                                opacity: c > 0 ? "1" : "0",
+                                top: `${l}px`,
+                                left: `${r.left}px`,
+                                width: `${r.width}px`,
+                                height: `${c}px`
+                            })
+                        }
+                    }
+                    handleKeyDown = i => {
+                        this.isActive && (i.key === "Escape" || i.key === "Esc") && this.handleVisualEditorToggle({
+                            type: "TOGGLE_REPLIT_VISUAL_EDITOR",
+                            enabled: !1,
+                            timestamp: Date.now()
+                        })
+                    }
+                    ;
+                    toggleEventListeners(i) {
+                        i ? (this.initializeHighlighter(),
+                        this.enableDisabledElements(),
+                        document.addEventListener("mousemove", this.handleMouseMove),
+                        document.addEventListener("mouseleave", this.handleMouseLeave),
+                        document.addEventListener("click", this.handleClick, !0),
+                        document.addEventListener("keydown", this.handleKeyDown),
+                        this.throttledRecalculate && (window.addEventListener("resize", this.throttledRecalculate),
+                        window.addEventListener("scroll", this.throttledRecalculate, !0))) : (this.restoreDisabledElements(),
+                        this.restoreElements(),
+                        document.removeEventListener("mousemove", this.handleMouseMove),
+                        document.removeEventListener("click", this.handleClick, !0),
+                        document.removeEventListener("mouseleave", this.handleMouseLeave),
+                        document.removeEventListener("keydown", this.handleKeyDown),
+                        this.throttledRecalculate && (window.removeEventListener("resize", this.throttledRecalculate),
+                        window.removeEventListener("scroll", this.throttledRecalculate, !0)),
+                        this.mutationObserver && (this.mutationObserver.disconnect(),
+                        this.mutationObserver = null),
+                        this.selectedElement && (this.selectedElement.removeAttribute("contenteditable"),
+                        this.selectedElement.removeAttribute("data-original-text"),
+                        document.querySelectorAll('[contenteditable="plaintext-only"]').forEach(t => {
+                            t.removeAttribute("contenteditable")
+                        }
+                        )),
+                        this.clearSelectedSiblingHighlighters(),
+                        this.clearHoverSiblingHighlighters(),
+                        this.hoverHighlighter?.remove(),
+                        this.hoverLabel?.remove(),
+                        this.selectedHighlighter?.remove(),
+                        this.selectedLabel?.remove(),
+                        this.shadowHost?.remove(),
+                        this.hoverHighlighter = null,
+                        this.hoverLabel = null,
+                        this.selectedHighlighter = null,
+                        this.selectedLabel = null,
+                        this.shadowHost = null,
+                        this.shadowRoot = null,
+                        this.selectedElement = null)
+                    }
+                    clearHighlighters(i) {
+                        return i.forEach(t => {
+                            t.remove()
+                        }
+                        ),
+                        []
+                    }
+                    clearHoverSiblingHighlighters() {
+                        this.hoverSiblingHighlighters = this.clearHighlighters(this.hoverSiblingHighlighters)
+                    }
+                    clearSelectedSiblingHighlighters() {
+                        this.selectedSiblingElements.forEach(i => {
+                            i.removeAttribute("contenteditable")
+                        }
+                        ),
+                        this.selectedSiblingElements = [],
+                        this.visibleSelectedSiblingElements = [],
+                        this.selectedSiblingHighlighters = this.clearHighlighters(this.selectedSiblingHighlighters)
+                    }
+                    highlightElements(i) {
+                        if (!this.shadowRoot || i.length === 0)
+                            return [];
+                        let t = [];
+                        return i.forEach(n => {
+                            let r = document.createElement("div");
+                            r.className = "beacon-highlighter beacon-sibling-highlighter",
+                            this.shadowRoot?.appendChild(r),
+                            t.push(r);
+                            let o = n.getBoundingClientRect()
+                              , l = window.innerHeight
+                              , s = Math.max(0, o.top)
+                              , c = Math.min(l, o.bottom)
+                              , h = Math.max(0, c - s);
+                            Object.assign(r.style, {
+                                opacity: h > 0 ? "1" : "0",
+                                top: `${s}px`,
+                                left: `${o.left}px`,
+                                width: `${o.width}px`,
+                                height: `${h}px`
+                            })
+                        }
+                        ),
+                        t
+                    }
+                    highlightHoverSiblings(i) {
+                        this.clearHoverSiblingHighlighters();
+                        let t = M(i, v.MAX_SIBLING_HIGHLIGHTERS, !0);
+                        this.hoverSiblingHighlighters = this.highlightElements(t)
+                    }
+                    highlightSelectedSiblings(i) {
+                        this.clearSelectedSiblingHighlighters();
+                        let t = M(i)
+                          , n = t.filter(r => ee(r));
+                        this.selectedSiblingElements = t,
+                        this.visibleSelectedSiblingElements = n,
+                        this.selectedSiblingHighlighters = this.highlightElements(n)
+                    }
+                    enableDisabledElements() {
+                        document.querySelectorAll("button[disabled], input[disabled]").forEach(i => {
+                            i.removeAttribute("disabled"),
+                            i.setAttribute("data-replit-disabled", "")
+                        }
+                        )
+                    }
+                    restoreDisabledElements() {
+                        document.querySelectorAll("[data-replit-disabled]").forEach(i => {
+                            i.removeAttribute("data-replit-disabled"),
+                            i.setAttribute("disabled", "")
+                        }
+                        )
+                    }
+                }
+                ;
+                if (typeof window < "u")
+                    try {
+                        window.REPLIT_BEACON_VERSION || (window.REPLIT_BEACON_VERSION = O,
+                        new D)
+                    } catch (e) {
+                        console.error("[replit-beacon] Failed to initialize:", e)
+                    }
+            }
+            )();
+        </script>
+        <script>
+            (function() {
+                var initialized = false;
 
-<canvas id="gc"></canvas>
-<!-- Hidden compatibility elements for original game code -->
-<span id="shop-coins-txt" style="display:none"></span>
-<span id="shop-msg" style="display:none"></span>
+                function loadTailwind() {
+                    if (initialized) {
+                        return;
+                    }
+                    initialized = true;
 
-<!-- Main Menu -->
-<div id="menu-overlay">
-  <div class="menu-inner">
-    <div class="menu-sickle">☭</div>
-    <div class="menu-title">ستالين</div>
-    <div class="menu-subtitle"><span class="menu-star">★</span>طريق إلى السلطة<span class="menu-star">★</span></div>
-    <button class="menu-btn" id="btn-start">▶ ابدأ اللعبة</button>
-    <button class="menu-btn" id="btn-howto">؟ كيف تلعب</button>
-    <button class="menu-btn" id="btn-shop-menu">🪙 المتجر</button>
-  </div>
-</div>
+                    var script = document.createElement('script');
+                    script.src = "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.14";
 
-<!-- Game Over -->
-<div id="gameover-overlay">
-  <div class="go-inner">
-    <div class="go-title">☠ لعبة انتهت ☠</div>
-    <div class="go-score" id="go-score-text"></div>
-    <button class="menu-btn" id="btn-retry">↺ حاول مرة أخرى</button>
-    <button class="menu-btn" id="btn-shop-go">🪙 المتجر</button>
-    <button class="menu-btn" id="btn-howto-go">؟ كيف تلعب</button>
-    <button class="menu-btn" id="btn-menu-go">⟵ القائمة الرئيسية</button>
-  </div>
-</div>
+                    if (window.REPLIT_APP_TAILWIND_CONFIG) {
+                        script.setAttribute('data-config', JSON.stringify(window.REPLIT_APP_TAILWIND_CONFIG));
+                    }
 
-<!-- Level Transition -->
-<div id="lvl-transition">
-  <div id="lvl-transition-bg"></div>
-  <div class="lvl-inner">
-    <div class="lvl-num" id="lvl-num-text">المرحلة ١</div>
-    <div class="lvl-name" id="lvl-name-text">الطفولة</div>
-    <div class="lvl-stars">★  ★  ★</div>
-  </div>
-</div>
+                    document.head.appendChild(script);
+                }
 
-<!-- Question Box -->
-<div id="q-overlay">
-  <div class="q-box">
-    <div class="q-header">
-      <span class="q-header-icon">☭</span>
-      <div class="q-header-title">سؤال تاريخي</div>
-      <div class="q-level-badge" id="q-lvl-badge">المرحلة ١</div>
-    </div>
-    <div class="q-text" id="q-text"></div>
-    <div class="q-options" id="q-choices"></div>
-    <div id="q-result" style="text-align:center;padding:8px 16px 0;font-size:15px;font-weight:700;min-height:28px"></div>
-    <div class="q-footer">
-      <span class="q-star-row">★</span>
-      <span>الاتحاد السوفيتي</span>
-      <span class="q-star-row">★</span>
-    </div>
-  </div>
-</div>
-
-<!-- Shop -->
-<div id="shop-overlay">
-  <div class="shop-box">
-    <div class="shop-header">
-      <div class="shop-title">☭ متجر الحزب ☭</div>
-      <div class="shop-coins-display">🪙 <span id="shop-coins-disp">0</span> عملة</div>
-    </div>
-    <div class="shop-items" id="shop-items-list"></div>
-    <button class="shop-close-btn" id="shop-close-btn">✕ إغلاق المتجر</button>
-  </div>
-</div>
-
-<!-- How To Play -->
-<div id="howto-overlay">
-  <div class="howto-box">
-    <div class="howto-header">
-      <div class="howto-title">☭ كيف تلعب ☭</div>
-    </div>
-    <div class="howto-body">
-      <div class="howto-section">
-        <div class="howto-section-title">⌨ لوحة المفاتيح</div>
-        <div class="howto-row"><span class="howto-key">← →</span> التحرك يميناً أو يساراً</div>
-        <div class="howto-row"><span class="howto-key">↑ / Z / مسافة</span> قفز</div>
-        <div class="howto-row"><span class="howto-key">X / F</span> هجوم</div>
-      </div>
-      <div class="howto-section">
-        <div class="howto-section-title">📱 الجوال</div>
-        <div class="howto-row"><div class="howto-icon">◀▶</div> أزرار التحرك (يسار الشاشة)</div>
-        <div class="howto-row"><div class="howto-icon">⬆</div> زر القفز (يمين الشاشة)</div>
-        <div class="howto-row"><div class="howto-icon">⚔</div> زر الهجوم (يمين الشاشة)</div>
-      </div>
-      <div class="howto-section">
-        <div class="howto-section-title">🎯 الهدف</div>
-        <div class="howto-row"><div class="howto-icon">📦</div> اضرب صناديق الأسئلة للحصول على عملات</div>
-        <div class="howto-row"><div class="howto-icon">⚔</div> هاجم الأعداء من الأعلى أو بالضربة</div>
-        <div class="howto-row"><div class="howto-icon">🚪</div> اصل إلى الباب للانتقال للمرحلة التالية</div>
-        <div class="howto-row"><div class="howto-icon">🪙</div> اجمع العملات لشراء مواد في المتجر</div>
-      </div>
-      <div class="howto-section">
-        <div class="howto-section-title">❤ الصحة والأرواح</div>
-        <div class="howto-row"><div class="howto-icon">❤</div> لديك 5 نقاط صحة في كل مرحلة</div>
-        <div class="howto-row"><div class="howto-icon">🛡</div> الدرع يحمي من ضربة واحدة</div>
-        <div class="howto-row"><div class="howto-icon">💊</div> أجب صحيحاً لاستعادة الصحة والحصول على عملات</div>
-      </div>
-    </div>
-    <button class="howto-close-btn" id="howto-close-btn">✕ إغلاق</button>
-  </div>
-</div>
-
-<!-- Mobile Controls -->
-<div id="mobile-controls">
-  <div class="ctrl-group">
-    <button class="ctrl-btn" id="ctrl-left">◀</button>
-    <button class="ctrl-btn" id="ctrl-right">▶</button>
-  </div>
-  <div class="ctrl-group">
-    <button class="ctrl-btn" id="ctrl-attack">⚔</button>
-    <button class="ctrl-btn" id="ctrl-jump" style="margin-right:4px">⬆</button>
-  </div>
-</div>
-
-<script>
-(function() {
+                // Listen for the beacon requesting tailwind initialization.
+                window.addEventListener('replit-init-tailwind', function() {
+                    if (window.REPLIT_APP_TAILWIND_CONFIG) {
+                        loadTailwind();
+                    } else {
+                        // Config not ready yet — wait for the config-ready event, but proceed
+                        // without a config after 1 second.  The config is optional (projects
+                        // without a tailwind config file will never fire the ready event).
+                        var configTimeout = setTimeout(function() {
+                            loadTailwind();
+                        }, 1000);
+                        window.addEventListener('replit-tailwind-config-ready', function() {
+                            clearTimeout(configTimeout);
+                            loadTailwind();
+                        }, {
+                            once: true
+                        });
+                    }
+                });
+            }
+            )();
+        </script>
+        <script type="text/javascript" src="/@replit/vite-plugin-dev-banner/banner-script.js" id="replit-dev-banner"></script>
+    </head>
+    <body>
+        <canvas id="gc"></canvas>
+        <!-- Hidden compatibility elements for original game code -->
+        <span id="shop-coins-txt" style="display:none"></span>
+        <span id="shop-msg" style="display:none"></span>
+        <span id="btnL" style="display:none"></span>
+        <span id="btnR" style="display:none"></span>
+        <span id="btnA" style="display:none"></span>
+        <span id="btnJ" style="display:none"></span>
+        <!-- Main Menu -->
+        <div id="menu-overlay">
+            <div class="menu-inner">
+                <div class="menu-sickle">☭</div>
+                <div class="menu-title">ستالين</div>
+                <div class="menu-subtitle">
+                    <span class="menu-star">★</span>
+                    طريق إلى السلطة<span class="menu-star">★</span>
+                </div>
+                <button class="menu-btn" id="btn-start">▶ ابدأ اللعبة</button>
+                <button class="menu-btn" id="btn-howto">؟ كيف تلعب</button>
+                <button class="menu-btn" id="btn-shop-menu">🪙 المتجر</button>
+            </div>
+        </div>
+        <!-- Game Over -->
+        <div id="gameover-overlay">
+            <div class="go-inner">
+                <div class="go-title">☠ لعبة انتهت ☠</div>
+                <div class="go-score" id="go-score-text"></div>
+                <button class="menu-btn" id="btn-retry">↺ حاول مرة أخرى</button>
+                <button class="menu-btn" id="btn-shop-go">🪙 المتجر</button>
+                <button class="menu-btn" id="btn-howto-go">؟ كيف تلعب</button>
+                <button class="menu-btn" id="btn-menu-go">⟵ القائمة الرئيسية</button>
+            </div>
+        </div>
+        <!-- Level Transition -->
+        <div id="lvl-transition">
+            <div id="lvl-transition-bg"></div>
+            <div class="lvl-inner">
+                <div class="lvl-num" id="lvl-num-text">المرحلة ١</div>
+                <div class="lvl-name" id="lvl-name-text">الطفولة</div>
+                <div class="lvl-stars">★  ★  ★</div>
+            </div>
+        </div>
+        <!-- Question Box -->
+        <div id="q-overlay">
+            <div class="q-box">
+                <div class="q-header">
+                    <span class="q-header-icon">☭</span>
+                    <div class="q-header-title">سؤال تاريخي</div>
+                    <div class="q-level-badge" id="q-lvl-badge">المرحلة ١</div>
+                </div>
+                <div class="q-text" id="q-text"></div>
+                <div class="q-options" id="q-choices"></div>
+                <div id="q-result" style="text-align:center;padding:8px 16px 0;font-size:15px;font-weight:700;min-height:28px"></div>
+                <div class="q-footer">
+                    <span class="q-star-row">★</span>
+                    <span>الاتحاد السوفيتي</span>
+                    <span class="q-star-row">★</span>
+                </div>
+            </div>
+        </div>
+        <!-- Shop -->
+        <div id="shop-overlay">
+            <div class="shop-box">
+                <div class="shop-header">
+                    <div class="shop-title">☭ متجر الحزب ☭</div>
+                    <div class="shop-coins-display">
+                        🪙 <span id="shop-coins-disp">0</span>
+                        عملة
+                    </div>
+                </div>
+                <div class="shop-items" id="shop-items-list"></div>
+                <button class="shop-close-btn" id="shop-close-btn">✕ إغلاق المتجر</button>
+            </div>
+        </div>
+        <!-- How To Play -->
+        <div id="howto-overlay">
+            <div class="howto-box">
+                <div class="howto-header">
+                    <div class="howto-title">☭ كيف تلعب ☭</div>
+                </div>
+                <div class="howto-body">
+                    <div class="howto-section">
+                        <div class="howto-section-title">⌨ لوحة المفاتيح</div>
+                        <div class="howto-row">
+                            <span class="howto-key">← →</span>
+                            التحرك يميناً أو يساراً
+                        </div>
+                        <div class="howto-row">
+                            <span class="howto-key">↑ / Z / مسافة</span>
+                            قفز
+                        </div>
+                        <div class="howto-row">
+                            <span class="howto-key">X / F</span>
+                            هجوم
+                        </div>
+                    </div>
+                    <div class="howto-section">
+                        <div class="howto-section-title">📱 الجوال</div>
+                        <div class="howto-row">
+                            <div class="howto-icon">◀▶</div>
+                            أزرار التحرك (يسار الشاشة)
+                        </div>
+                        <div class="howto-row">
+                            <div class="howto-icon">⬆</div>
+                            زر القفز (يمين الشاشة)
+                        </div>
+                        <div class="howto-row">
+                            <div class="howto-icon">⚔</div>
+                            زر الهجوم (يمين الشاشة)
+                        </div>
+                    </div>
+                    <div class="howto-section">
+                        <div class="howto-section-title">🎯 الهدف</div>
+                        <div class="howto-row">
+                            <div class="howto-icon">📦</div>
+                            اضرب صناديق الأسئلة للحصول على عملات
+                        </div>
+                        <div class="howto-row">
+                            <div class="howto-icon">⚔</div>
+                            هاجم الأعداء من الأعلى أو بالضربة
+                        </div>
+                        <div class="howto-row">
+                            <div class="howto-icon">🚪</div>
+                            اصل إلى الباب للانتقال للمرحلة التالية
+                        </div>
+                        <div class="howto-row">
+                            <div class="howto-icon">🪙</div>
+                            اجمع العملات لشراء مواد في المتجر
+                        </div>
+                    </div>
+                    <div class="howto-section">
+                        <div class="howto-section-title">❤ الصحة والأرواح</div>
+                        <div class="howto-row">
+                            <div class="howto-icon">❤</div>
+                            لديك 5 نقاط صحة في كل مرحلة
+                        </div>
+                        <div class="howto-row">
+                            <div class="howto-icon">🛡</div>
+                            الدرع يحمي من ضربة واحدة
+                        </div>
+                        <div class="howto-row">
+                            <div class="howto-icon">💊</div>
+                            أجب صحيحاً لاستعادة الصحة والحصول على عملات
+                        </div>
+                    </div>
+                </div>
+                <button class="howto-close-btn" id="howto-close-btn">✕ إغلاق</button>
+            </div>
+        </div>
+        <!-- Mobile Controls -->
+        <div id="mobile-controls">
+            <div class="ctrl-group">
+                <button class="ctrl-btn" id="ctrl-left">◀</button>
+                <button class="ctrl-btn" id="ctrl-right">▶</button>
+            </div>
+            <div class="ctrl-group">
+                <button class="ctrl-btn" id="ctrl-attack">⚔</button>
+                <button class="ctrl-btn" id="ctrl-jump" style="margin-right:4px">⬆</button>
+            </div>
+        </div>
+        <script>
+            (function() {
 
                 // ─── Constants ────────────────────────────────────────────────────────────────
                 const CW = 1800
@@ -483,14 +3170,38 @@ body{background:#000;overflow:hidden;width:100vw;height:100vh;font-family:'Cairo
                 // ضع بيانات الصور هنا (base64 أو URL)
                 // كل مرحلة لها صورتان: img1 للنصف الأول، img2 للنصف الثاني
                 const BG_SRC = {
-                    1: { img1: './level1-bg.png', img2: './level1-bg.png' },
-                    2: { img1: './level2-bg.png', img2: './level2-bg.png' },
-                    3: { img1: './level1-bg.png', img2: './level2-bg.png' },
-                    4: { img1: './level2-bg.png', img2: './level1-bg.png' },
-                    5: { img1: './level1-bg.png', img2: './level2-bg.png' },
-                    6: { img1: './level2-bg.png', img2: './level1-bg.png' },
-                    7: { img1: './level2-bg.png', img2: './level1-bg.png' },
-                    8: { img1: './level2-bg.png', img2: './level2-bg.png' },
+                    1: {
+                        img1: './level1-bg.png',
+                        img2: './level1-bg.png'
+                    },
+                    2: {
+                        img1: './level2-bg.png',
+                        img2: './level2-bg.png'
+                    },
+                    3: {
+                        img1: './level1-bg.png',
+                        img2: './level2-bg.png'
+                    },
+                    4: {
+                        img1: './level2-bg.png',
+                        img2: './level1-bg.png'
+                    },
+                    5: {
+                        img1: './level1-bg.png',
+                        img2: './level2-bg.png'
+                    },
+                    6: {
+                        img1: './level2-bg.png',
+                        img2: './level1-bg.png'
+                    },
+                    7: {
+                        img1: './level2-bg.png',
+                        img2: './level1-bg.png'
+                    },
+                    8: {
+                        img1: './level2-bg.png',
+                        img2: './level2-bg.png'
+                    },
                 };
                 const bgImgCache = {};
                 function getBgImg(lvId, part) {
@@ -501,7 +3212,7 @@ body{background:#000;overflow:hidden;width:100vw;height:100vh;font-family:'Cairo
                     if (!src)
                         return null;
                     const img = new Image();
-                    
+
                     img.src = src;
                     bgImgCache[k] = img;
                     return img;
@@ -777,7 +3488,8 @@ body{background:#000;overflow:hidden;width:100vw;height:100vh;font-family:'Cairo
                     m81: 'm81',
                     m82: 'm82'
                 };
-                window.LEVEL_NAMES = null; const LEVEL_NAMES = window.LEVEL_NAMES = {
+                window.LEVEL_NAMES = null;
+                const LEVEL_NAMES = window.LEVEL_NAMES = {
                     1: 'الطفولة',
                     2: 'الشباب والثورة',
                     3: 'العمل السياسي',
@@ -1142,7 +3854,8 @@ body{background:#000;overflow:hidden;width:100vw;height:100vh;font-family:'Cairo
                 }
 
                 // ─── Game State ───────────────────────────────────────────────────────────────
-                window.G = null; let G = window.G = {
+                window.G = null;
+                let G = window.G = {
                     state: 'menu',
                     pl: null,
                     enemies: [],
@@ -1196,11 +3909,11 @@ body{background:#000;overflow:hidden;width:100vw;height:100vh;font-family:'Cairo
                 window.startGame = function startGame() {
                     const {lv, enemies, coins, qboxes} = cloneLv(0);
                     G = {
-                        state: 'playing',
+                        state: 'levelComplete',
                         pl: mkPlayer(),
                         enemies,
                         coins,
-                        lvIdx: 0,
+                        lvIdx: -1,
                         lv,
                         qboxes,
                         cam: {
@@ -1210,6 +3923,21 @@ body{background:#000;overflow:hidden;width:100vw;height:100vh;font-family:'Cairo
                         tick: 0,
                         lcTimer: 0
                     };
+                    if (!window._rafLoopStarted) {
+                        window._rafLoopStarted = true;
+                        (function rafLoop() {
+                            requestAnimationFrame(rafLoop);
+                            if (!G)
+                                return;
+                            if (G.state === 'playing') {
+                                update();
+                                drawGame();
+                            } else if (G.state === 'question') {
+                                drawGame();
+                            }
+                        }
+                        )();
+                    }
                 }
                 function nextLevel() {
                     const ni = G.lvIdx + 1;
@@ -1267,7 +3995,8 @@ body{background:#000;overflow:hidden;width:100vw;height:100vh;font-family:'Cairo
                 }
 
                 // ─── Input ────────────────────────────────────────────────────────────────────
-                window.INP = null; const INP = window.INP = {
+                window.INP = null;
+                const INP = window.INP = {
                     left: false,
                     right: false,
                     jump: false,
@@ -1334,11 +4063,11 @@ body{background:#000;overflow:hidden;width:100vw;height:100vh;font-family:'Cairo
                         handleAction('right', true);
                         e.preventDefault();
                     }
-                    if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+                    if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'KeyZ') {
                         handleAction('jump', true);
                         e.preventDefault();
                     }
-                    if (e.code === 'KeyZ' || e.code === 'KeyX' || e.code === 'KeyJ')
+                    if (e.code === 'KeyX' || e.code === 'KeyJ' || e.code === 'KeyF')
                         handleAction('attack', true);
                 }
                 );
@@ -1349,7 +4078,7 @@ body{background:#000;overflow:hidden;width:100vw;height:100vh;font-family:'Cairo
                         handleAction('right', false);
                     if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW')
                         handleAction('jump', false);
-                    if (e.code === 'KeyZ' || e.code === 'KeyX' || e.code === 'KeyJ')
+                    if (e.code === 'KeyX' || e.code === 'KeyJ' || e.code === 'KeyF')
                         handleAction('attack', false);
                 }
                 );
@@ -1389,6 +4118,9 @@ body{background:#000;overflow:hidden;width:100vw;height:100vh;font-family:'Cairo
                         qbox
                     };
                     document.getElementById('q-text').textContent = q.q;
+                    const lvBadge = document.getElementById('q-lvl-badge');
+                    if (lvBadge && G.lv)
+                        lvBadge.textContent = (typeof LEVEL_NAMES !== 'undefined' && LEVEL_NAMES[G.lv.id]) || 'المرحلة ' + G.lv.id;
                     const ch = document.getElementById('q-choices');
                     ch.innerHTML = '';
                     q.choices.forEach( (c, i) => {
@@ -1643,17 +4375,43 @@ body{background:#000;overflow:hidden;width:100vw;height:100vh;font-family:'Cairo
                     e.x += e.vx;
                     // Clamp to patrol boundaries
                     if (e.pl !== undefined && e.pr !== undefined) {
-                        if (e.x < e.pl) { e.x = e.pl; e.vx = Math.abs(e.vx); e.facingRight = true; }
-                        if (e.x + e.width > e.pr) { e.x = e.pr - e.width; e.vx = -Math.abs(e.vx); e.facingRight = false; }
+                        if (e.x < e.pl) {
+                            e.x = e.pl;
+                            e.vx = Math.abs(e.vx);
+                            e.facingRight = true;
+                        }
+                        if (e.x + e.width > e.pr) {
+                            e.x = e.pr - e.width;
+                            e.vx = -Math.abs(e.vx);
+                            e.facingRight = false;
+                        }
                     }
-                    if (e.x < 0) { e.x = 0; e.vx = Math.abs(e.vx); }
-                    if (e.x + e.width > lv.w) { e.x = lv.w - e.width; e.vx = -Math.abs(e.vx); }
+                    if (e.x < 0) {
+                        e.x = 0;
+                        e.vx = Math.abs(e.vx);
+                    }
+                    if (e.x + e.width > lv.w) {
+                        e.x = lv.w - e.width;
+                        e.vx = -Math.abs(e.vx);
+                    }
                 }
 
                 // ─── Rendering ───────────────────────────────────────────────────────────────
                 const canvas = document.getElementById('gc');
+                canvas.width = CW;
+                canvas.height = CH;
                 const ctx = canvas.getContext('2d');
                 ctx.imageSmoothingEnabled = false;
+                // Responsive scaling
+                function resizeCanvas() {
+                    const sx = window.innerWidth / CW;
+                    const sy = window.innerHeight / CH;
+                    const sc = Math.min(sx, sy);
+                    canvas.style.width = (CW * sc) + 'px';
+                    canvas.style.height = (CH * sc) + 'px';
+                }
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
 
                 const PLAT_C = {
                     stone: {
@@ -2059,155 +4817,280 @@ body{background:#000;overflow:hidden;width:100vw;height:100vh;font-family:'Cairo
                 function drawGameOver() {
                     ctx.clearRect(0, 0, CW, CH);
                 }
-        // Global exports for HTML overlay
-        window.G = G;
-        window.INP = INP;
-        window.LEVEL_NAMES = LEVEL_NAMES;
-        window.startGame = startGame;
-        window.restartGame = restartGame;
-        window.getG = () => G;
-        window.getINP = () => INP;
-        window.getLevelNames = () => LEVEL_NAMES;
-;
+                // Global exports for HTML overlay
+                window.G = G;
+                window.INP = INP;
+                window.LEVEL_NAMES = LEVEL_NAMES;
+                window.startGame = startGame;
+                window.restartGame = startGame;
+                window.getG = () => G;
+                window.getINP = () => INP;
+                window.getLevelNames = () => LEVEL_NAMES;
+                window.nextLevel = nextLevel;
+            }
+            )();
 
-// ─── HTML Overlay Controller ───────────────────────────────────────────────
+            // ─── HTML Overlay Controller ───────────────────────────────────────────────
 
-const LEVEL_BG_IMGS = {
-  1:'./level1-bg.png', 2:'./level2-bg.png', 3:'./level1-bg.png',
-  4:'./level2-bg.png', 5:'./level1-bg.png', 6:'./level2-bg.png',
-  7:'./level2-bg.png', 8:'./level2-bg.png'
-};
-const LEVEL_NUM_AR = {1:'١',2:'٢',3:'٣',4:'٤',5:'٥',6:'٦',7:'٧',8:'٨'};
+            const LEVEL_BG_IMGS = {
+                1: 'https://raw.githubusercontent.com/GhesHuba/-/main/l1.png',
+                2: 'https://raw.githubusercontent.com/GhesHuba/-/main/l2.png',
+                3: 'https://raw.githubusercontent.com/GhesHuba/-/main/l3.png',
+                4: 'https://raw.githubusercontent.com/GhesHuba/-/main/l4.png',
+                5: 'https://raw.githubusercontent.com/GhesHuba/-/main/l5.png',
+                6: 'https://raw.githubusercontent.com/GhesHuba/-/main/l6.png',
+                7: 'https://raw.githubusercontent.com/GhesHuba/-/main/l7.png',
+                8: 'https://raw.githubusercontent.com/GhesHuba/-/main/l8.png'
+            };
+            const LEVEL_NUM_AR = {
+                1: '١',
+                2: '٢',
+                3: '٣',
+                4: '٤',
+                5: '٥',
+                6: '٦',
+                7: '٧',
+                8: '٨'
+            };
 
-const menuEl   = document.getElementById('menu-overlay');
-const goEl     = document.getElementById('gameover-overlay');
-const lvlTrans = document.getElementById('lvl-transition');
-const ctrlEl   = document.getElementById('mobile-controls');
+            const menuEl = document.getElementById('menu-overlay');
+            const goEl = document.getElementById('gameover-overlay');
+            const lvlTrans = document.getElementById('lvl-transition');
+            const ctrlEl = document.getElementById('mobile-controls');
 
-function isMobile() {
-  return /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth < 700;
-}
+            function isMobile() {
+                return /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth < 700;
+            }
 
-// ─ Level transition display ─
-function showLevelTransition(lvId) {
-  const name = (typeof LEVEL_NAMES !== 'undefined' && LEVEL_NAMES[lvId]) || ('المرحلة ' + lvId);
-  const numAr = LEVEL_NUM_AR[lvId] || String(lvId);
-  document.getElementById('lvl-num-text').textContent = 'المرحلة ' + numAr;
-  document.getElementById('lvl-name-text').textContent = name;
+            // ─ Level transition display ─
+            function showLevelTransition(lvId) {
+                const imgUrl = LEVEL_BG_IMGS[lvId] || 'https://raw.githubusercontent.com/GhesHuba/-/main/l1.png';
+                const bgEl = document.getElementById('lvl-transition-bg');
+                bgEl.style.backgroundImage = 'url(' + imgUrl + ')';
+                bgEl.classList.remove('show');
+                setTimeout( () => bgEl.classList.add('show'), 30);
+                const name = (typeof LEVEL_NAMES !== 'undefined' && LEVEL_NAMES[lvId]) || ('المرحلة ' + lvId);
+                const numAr = LEVEL_NUM_AR[lvId] || String(lvId);
+                document.getElementById('lvl-num-text').textContent = 'المرحلة ' + numAr;
+                document.getElementById('lvl-name-text').textContent = name;
+                lvlTrans.classList.add('active');
+                ctrlEl.classList.remove('active');
+                playLevelJingle();
+                let dismissed = false;
+                function dismissTrans() {
+                    if (dismissed)
+                        return;
+                    dismissed = true;
+                    lvlTrans.classList.remove('active');
+                    document.removeEventListener('keydown', dismissTrans);
+                    lvlTrans.removeEventListener('touchstart', dismissTrans);
+                    lvlTrans.removeEventListener('click', dismissTrans);
+                    // Auto-advance to next level after transition is dismissed
+                    const _gx = window.getG ? window.getG() : null;
+                    if (_gx && _gx.state === 'levelComplete' && typeof window.nextLevel === 'function') {
+                        setTimeout( () => {
+                            if (window.getG && window.getG().state === 'levelComplete')
+                                window.nextLevel();
+                        }
+                        , 100);
+                    }
+                }
+                document.addEventListener('keydown', dismissTrans, {
+                    once: true
+                });
+                lvlTrans.addEventListener('touchstart', dismissTrans, {
+                    once: true,
+                    passive: true
+                });
+                lvlTrans.addEventListener('click', dismissTrans, {
+                    once: true
+                });
+                setTimeout(dismissTrans, 5000);
+            }
 
-  const bgEl = document.getElementById('lvl-transition-bg');
-  bgEl.classList.remove('show');
-  const imgUrl = LEVEL_BG_IMGS[lvId] || './level1-bg.png';
-  bgEl.style.backgroundImage = 'url(' + imgUrl + ')';
-  setTimeout(() => bgEl.classList.add('show'), 30);
+            function playLevelJingle() {
+                try {
+                    const ac = new (window.AudioContext || window.webkitAudioContext)();
+                    const seq = [{
+                        f: 523,
+                        t: 0
+                    }, {
+                        f: 659,
+                        t: .13
+                    }, {
+                        f: 784,
+                        t: .26
+                    }, {
+                        f: 1047,
+                        t: .39
+                    }, {
+                        f: 784,
+                        t: .56
+                    }, {
+                        f: 659,
+                        t: .69
+                    }, {
+                        f: 784,
+                        t: .82
+                    }];
+                    seq.forEach( ({f, t}) => {
+                        const o = ac.createOscillator()
+                          , g = ac.createGain();
+                        o.connect(g);
+                        g.connect(ac.destination);
+                        o.frequency.value = f;
+                        o.type = 'square';
+                        const st = ac.currentTime + t;
+                        g.gain.setValueAtTime(0, st);
+                        g.gain.linearRampToValueAtTime(0.35, st + 0.02);
+                        g.gain.exponentialRampToValueAtTime(0.001, st + 0.13);
+                        o.start(st);
+                        o.stop(st + 0.14);
+                    }
+                    );
+                } catch (e) {}
+            }
 
-  lvlTrans.classList.add('active');
-  ctrlEl.classList.remove('active');
-  playLevelJingle();
+            // ─ State polling ─
+            let _prevState = null
+              , _lcShown = false;
 
-  setTimeout(() => { lvlTrans.classList.remove('active'); }, 3000);
-}
+            setInterval( () => {
+                const _G = window.getG ? window.getG() : null;
+                if (!_G)
+                    return;
+                const G = _G;
+                const st = G.state;
+                const canvas = document.getElementById('gc');
+                if (st !== _prevState) {
+                    _prevState = st;
+                    if (st === 'menu') {
+                        menuEl.classList.remove('hidden');
+                        goEl.classList.remove('active');
+                        lvlTrans.classList.remove('active');
+                        ctrlEl.classList.remove('active');
+                        if (canvas)
+                            canvas.style.visibility = 'hidden';
+                    } else if (st === 'levelComplete') {
+                        menuEl.classList.add('hidden');
+                        goEl.classList.remove('active');
+                        if (canvas)
+                            canvas.style.visibility = 'hidden';
+                        ctrlEl.classList.remove('active');
+                    } else if (st === 'playing' || st === 'question') {
+                        menuEl.classList.add('hidden');
+                        goEl.classList.remove('active');
+                        if (canvas)
+                            canvas.style.visibility = 'visible';
+                        if (isMobile())
+                            ctrlEl.classList.add('active');
+                    } else if (st === 'win') {
+                        if (canvas)
+                            canvas.style.visibility = 'hidden';
+                        goEl.classList.remove('active');
+                        const winEl = document.getElementById('win-overlay');
+                        if (winEl && winEl.style.display !== 'flex') {
+                            winEl.style.display = 'flex';
+                            const sc = G.pl ? G.pl.score : 0
+                              , co = G.pl ? G.pl.coins : 0;
+                            const wt = document.getElementById('win-score-text');
+                            if (wt)
+                                wt.textContent = 'النقاط: ' + sc + '  •  العملات: 🪙 ' + co;
+                        }
+                        ctrlEl.classList.remove('active');
+                    } else if (st === 'gameOver') {
+                        if (canvas)
+                            canvas.style.visibility = 'hidden';
+                        goEl.classList.add('active');
+                        const sc = G.pl ? G.pl.score : 0;
+                        const co = G.pl ? G.pl.coins : 0;
+                        document.getElementById('go-score-text').textContent = 'النقاط: ' + sc + '  •  العملات: 🪙 ' + co;
+                        ctrlEl.classList.remove('active');
+                    }
+                }
+                if (st === 'levelComplete' && !_lcShown) {
+                    _lcShown = true;
+                    const nextIdx = G.lvIdx + 1;
+                    const nextId = nextIdx + 1;
+                    showLevelTransition(nextId);
+                }
+                if (st !== 'levelComplete')
+                    _lcShown = false;
+            }
+            , 50);
 
-function playLevelJingle() {
-  try {
-    const ac = new (window.AudioContext || window.webkitAudioContext)();
-    const seq = [{f:523,t:0},{f:659,t:.13},{f:784,t:.26},{f:1047,t:.39},{f:784,t:.56},{f:659,t:.69},{f:784,t:.82}];
-    seq.forEach(({f, t}) => {
-      const o = ac.createOscillator(), g = ac.createGain();
-      o.connect(g); g.connect(ac.destination);
-      o.frequency.value = f; o.type = 'square';
-      const st = ac.currentTime + t;
-      g.gain.setValueAtTime(0, st);
-      g.gain.linearRampToValueAtTime(0.35, st + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.001, st + 0.13);
-      o.start(st); o.stop(st + 0.14);
-    });
-  } catch(e){}
-}
+            // ─ Button wiring ─
+            document.getElementById('btn-start').onclick = () => {
+                if (typeof startGame === 'function')
+                    startGame();
+            }
+            ;
+            document.getElementById('btn-howto').onclick = () => {
+                document.getElementById('howto-overlay').classList.add('active');
+            }
+            ;
+            document.getElementById('btn-shop-menu').onclick = () => openShopOverlay();
+            document.getElementById('btn-retry').onclick = () => {
+                goEl.classList.remove('active');
+                if (typeof startGame === 'function')
+                    startGame();
+            }
+            ;
+            document.getElementById('btn-shop-go').onclick = () => {
+                goEl.classList.remove('active');
+                openShopOverlay();
+            }
+            ;
+            document.getElementById('btn-howto-go').onclick = () => {
+                document.getElementById('howto-overlay').classList.add('active');
+            }
+            ;
+            document.getElementById('btn-menu-go').onclick = () => {
+                goEl.classList.remove('active');
+                const _g = window.getG ? window.getG() : null;
+                if (_g)
+                    _g.state = 'menu';
+                menuEl.classList.remove('hidden');
+            }
+            ;
+            document.getElementById('howto-close-btn').onclick = () => {
+                document.getElementById('howto-overlay').classList.remove('active');
+            }
+            ;
+            document.getElementById('shop-close-btn').onclick = () => {
+                document.getElementById('shop-overlay').classList.remove('active');
+                const _gs = window.getG ? window.getG() : null;
+                if (_gs && _gs.state === 'shop')
+                    _gs.state = 'playing';
+            }
+            ;
 
-// ─ State polling ─
-let _prevState = null, _lcShown = false;
-
-setInterval(() => {
-  const _G = window.getG ? window.getG() : null;
-  if (!_G) return;
-  const G = _G;
-  const st = G.state;
-  const canvas = document.getElementById('gc');
-  if (st !== _prevState) {
-    _prevState = st;
-    if (st === 'menu') {
-      menuEl.classList.remove('hidden');
-      goEl.classList.remove('active');
-      lvlTrans.classList.remove('active');
-      ctrlEl.classList.remove('active');
-      if (canvas) canvas.style.visibility = 'hidden';
-    } else if (st === 'playing' || st === 'question') {
-      menuEl.classList.add('hidden');
-      goEl.classList.remove('active');
-      if (canvas) canvas.style.visibility = 'visible';
-      if (isMobile()) ctrlEl.classList.add('active');
-    } else if (st === 'gameOver') {
-      if (canvas) canvas.style.visibility = 'hidden';
-      goEl.classList.add('active');
-      const sc = G.pl ? G.pl.score : 0;
-      const co = G.pl ? G.pl.coins : 0;
-      document.getElementById('go-score-text').textContent = 'النقاط: ' + sc + '  •  العملات: 🪙 ' + co;
-      ctrlEl.classList.remove('active');
-    }
-  }
-  if (st === 'levelComplete' && !_lcShown) {
-    _lcShown = true;
-    const nextIdx = G.lvIdx + 1;
-    const nextId = nextIdx + 1;
-    showLevelTransition(nextId);
-  }
-  if (st !== 'levelComplete') _lcShown = false;
-}, 50);
-
-// ─ Button wiring ─
-document.getElementById('btn-start').onclick = () => {
-  if (typeof startGame === 'function') startGame();
-};
-document.getElementById('btn-howto').onclick = () => {
-  document.getElementById('howto-overlay').classList.add('active');
-};
-document.getElementById('btn-shop-menu').onclick = () => openShopOverlay();
-document.getElementById('btn-retry').onclick = () => {
-  goEl.classList.remove('active');
-  if (typeof restartGame === 'function') restartGame();
-};
-document.getElementById('btn-shop-go').onclick = () => {
-  goEl.classList.remove('active'); openShopOverlay();
-};
-document.getElementById('btn-howto-go').onclick = () => {
-  document.getElementById('howto-overlay').classList.add('active');
-};
-document.getElementById('btn-menu-go').onclick = () => {
-  goEl.classList.remove('active');
-  const _g = window.getG ? window.getG() : null;
-  if (_g) _g.state = 'menu';
-  menuEl.classList.remove('hidden');
-};
-document.getElementById('howto-close-btn').onclick = () => {
-  document.getElementById('howto-overlay').classList.remove('active');
-};
-document.getElementById('shop-close-btn').onclick = () => {
-  document.getElementById('shop-overlay').classList.remove('active');
-};
-
-// ─ Shop ─
-function openShopOverlay() {
-  const shopEl = document.getElementById('shop-overlay');
-  const _g = window.getG ? window.getG() : null;
-  const coins = (_g && _g.pl) ? _g.pl.coins : 0;
-  document.getElementById('shop-coins-disp').textContent = coins;
-  const SHOP_ITEMS = [
-    {id:'hp',    icon:'❤',  name:'استعادة الصحة', desc:'يعيد 3 نقاط صحة', price:5},
-    {id:'shield',icon:'🛡', name:'درع واقٍ',      desc:'يحمي من الضربة التالية', price:8},
-    {id:'extra_life',icon:'💛',name:'حياة إضافية', desc:'تضيف حياة كاملة', price:15},
-  ];
-  document.getElementById('shop-items-list').innerHTML = SHOP_ITEMS.map(item => `
+            // ─ Shop ─
+            function openShopOverlay() {
+                const shopEl = document.getElementById('shop-overlay');
+                const _g = window.getG ? window.getG() : null;
+                const coins = (_g && _g.pl) ? _g.pl.coins : 0;
+                document.getElementById('shop-coins-disp').textContent = coins;
+                const SHOP_ITEMS = [{
+                    id: 'hp',
+                    icon: '❤',
+                    name: 'استعادة الصحة',
+                    desc: 'يعيد 3 نقاط صحة',
+                    price: 5
+                }, {
+                    id: 'shield',
+                    icon: '🛡',
+                    name: 'درع واقٍ',
+                    desc: 'يحمي من الضربة التالية',
+                    price: 8
+                }, {
+                    id: 'extra_life',
+                    icon: '💛',
+                    name: 'حياة إضافية',
+                    desc: 'تضيف حياة كاملة',
+                    price: 15
+                }, ];
+                document.getElementById('shop-items-list').innerHTML = SHOP_ITEMS.map(item => `
     <div class="shop-item">
       <span class="shop-item-icon">${item.icon}</span>
       <div class="shop-item-info">
@@ -2218,56 +5101,131 @@ function openShopOverlay() {
       <button class="shop-buy-btn" onclick="window.buyItem('${item.id}',${item.price})" ${coins < item.price ? 'disabled' : ''}>شراء</button>
     </div>
   `).join('');
-  shopEl.classList.add('active');
-}
+                shopEl.classList.add('active');
+            }
 
-window.buyItem = function(id, price) {
-  const _g = window.getG ? window.getG() : null;
-  if (!_g || !_g.pl || _g.pl.coins < price) return;
-  _g.pl.coins -= price;
-  if (id === 'hp') _g.pl.hp = Math.min(_g.pl.maxHp, (_g.pl.hp || 0) + 3);
-  else if (id === 'shield') _g.pl.hasShield = true;
-  else if (id === 'extra_life') _g.pl.lives = Math.min((_g.pl.lives || 0) + 1, 9);
-  openShopOverlay();
-};
+            window.buyItem = function(id, price) {
+                const _g = window.getG ? window.getG() : null;
+                if (!_g || !_g.pl || _g.pl.coins < price)
+                    return;
+                _g.pl.coins -= price;
+                if (id === 'hp')
+                    _g.pl.hp = Math.min(_g.pl.maxHp, (_g.pl.hp || 0) + 3);
+                else if (id === 'shield')
+                    _g.pl.hasShield = true;
+                else if (id === 'extra_life')
+                    _g.pl.lives = Math.min((_g.pl.lives || 0) + 1, 9);
+                openShopOverlay();
+            }
+            ;
 
-// ─ Mobile controls ─
-function mkCtrl(id, onDown, onUp) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const dn = e => { e.preventDefault(); e.stopPropagation(); el.classList.add('pressed'); onDown(); };
-  const up = e => { e.preventDefault(); e.stopPropagation(); el.classList.remove('pressed'); onUp(); };
-  el.addEventListener('touchstart', dn, {passive:false});
-  el.addEventListener('touchend',   up, {passive:false});
-  el.addEventListener('touchcancel',up, {passive:false});
-  el.addEventListener('mousedown',  dn);
-  el.addEventListener('mouseup',    up);
-  el.addEventListener('mouseleave', up);
-}
-mkCtrl('ctrl-left',
-  () => { const _i=window.getINP?window.getINP():null; if(_i) _i.left=true; },
-  () => { const _i=window.getINP?window.getINP():null; if(_i) _i.left=false; }
-);
-mkCtrl('ctrl-right',
-  () => { const _i=window.getINP?window.getINP():null; if(_i) _i.right=true; },
-  () => { const _i=window.getINP?window.getINP():null; if(_i) _i.right=false; }
-);
-mkCtrl('ctrl-jump',
-  () => { const _i=window.getINP?window.getINP():null; if(_i){_i.jump=true;_i.jumpP=true;} },
-  () => { const _i=window.getINP?window.getINP():null; if(_i){_i.jump=false;_i.jumpP=false;} }
-);
-mkCtrl('ctrl-attack',
-  () => { const _i=window.getINP?window.getINP():null; if(_i){_i.attack=true;_i.atkP=true;} },
-  () => { const _i=window.getINP?window.getINP():null; if(_i){_i.attack=false;_i.atkP=false;} }
-);
+            // ─ Mobile controls ─
+            function mkCtrl(id, onDown, onUp) {
+                const el = document.getElementById(id);
+                if (!el)
+                    return;
+                const dn = e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    el.classList.add('pressed');
+                    onDown();
+                }
+                ;
+                const up = e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    el.classList.remove('pressed');
+                    onUp();
+                }
+                ;
+                el.addEventListener('touchstart', dn, {
+                    passive: false
+                });
+                el.addEventListener('touchend', up, {
+                    passive: false
+                });
+                el.addEventListener('touchcancel', up, {
+                    passive: false
+                });
+                el.addEventListener('mousedown', dn);
+                el.addEventListener('mouseup', up);
+                el.addEventListener('mouseleave', up);
+            }
+            mkCtrl('ctrl-left', () => {
+                const _i = window.getINP ? window.getINP() : null;
+                if (_i)
+                    _i.left = true;
+            }
+            , () => {
+                const _i = window.getINP ? window.getINP() : null;
+                if (_i)
+                    _i.left = false;
+            }
+            );
+            mkCtrl('ctrl-right', () => {
+                const _i = window.getINP ? window.getINP() : null;
+                if (_i)
+                    _i.right = true;
+            }
+            , () => {
+                const _i = window.getINP ? window.getINP() : null;
+                if (_i)
+                    _i.right = false;
+            }
+            );
+            mkCtrl('ctrl-jump', () => {
+                const _i = window.getINP ? window.getINP() : null;
+                if (_i) {
+                    _i.jump = true;
+                    _i.jumpP = true;
+                }
+            }
+            , () => {
+                const _i = window.getINP ? window.getINP() : null;
+                if (_i) {
+                    _i.jump = false;
+                    _i.jumpP = false;
+                }
+            }
+            );
+            mkCtrl('ctrl-attack', () => {
+                const _i = window.getINP ? window.getINP() : null;
+                if (_i) {
+                    _i.attack = true;
+                    _i.atkP = true;
+                }
+            }
+            , () => {
+                const _i = window.getINP ? window.getINP() : null;
+                if (_i) {
+                    _i.attack = false;
+                    _i.atkP = false;
+                }
+            }
+            );
 
-// Show mobile controls on touch device
-if (isMobile()) document.addEventListener('touchstart', () => {
-  const _g = window.getG ? window.getG() : null;
-  if (_g && (_g.state === 'playing' || _g.state === 'question')) {
-    ctrlEl.classList.add('active');
-  }
-}, {once: true});
-</script>
-<script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-repl-id="7f9837ba-f366-49b1-ba1b-0ffedcd1dd99"></script></body>
+            // Show mobile controls on touch device
+            if (isMobile())
+                document.addEventListener('touchstart', () => {
+                    const _g = window.getG ? window.getG() : null;
+                    if (_g && (_g.state === 'playing' || _g.state === 'question')) {
+                        ctrlEl.classList.add('active');
+                    }
+                }
+                , {
+                    once: true
+                });
+        </script>
+        <script src="https://replit-cdn.com/replit-pill/replit-pill.global.js" data-repl-id="7f9837ba-f366-49b1-ba1b-0ffedcd1dd99"></script>
+        <!-- Win Overlay -->
+        <div id="win-overlay" style="position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(to bottom,#000 0%,#1a0030 40%,#000 100%);z-index:200;">
+            <div style="position:relative;z-index:2;text-align:center;padding:20px">
+                <div style="font-size:clamp(50px,12vw,110px);margin-bottom:10px">☭</div>
+                <div style="font-family:'Amiri',serif;font-size:clamp(32px,8vw,80px);color:#FFD700;text-shadow:0 0 30px rgba(255,200,0,0.9),2px 2px 12px #000;margin-bottom:16px">أحكمت السيطرة!</div>
+                <div id="win-score-text" style="font-size:clamp(16px,3vw,26px);color:#e8c87a;margin-bottom:32px;font-weight:700"></div>
+                <button class="menu-btn" id="btn-play-again" onclick="document.getElementById('win-overlay').style.display='none';if(typeof startGame==='function')startGame();">↺ العب مجدداً</button>
+                <button class="menu-btn" id="btn-menu-win" onclick="document.getElementById('win-overlay').style.display='none';document.getElementById('menu-overlay').classList.remove('hidden');if(window.getG)window.getG().state='menu';">⟵ القائمة الرئيسية</button>
+            </div>
+        </div>
+    </body>
 </html>
